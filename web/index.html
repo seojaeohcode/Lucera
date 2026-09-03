@@ -37,15 +37,11 @@
     .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px 11px 11px 4px; color: #fff9ed; background: var(--ink); box-shadow: 5px 5px 0 var(--sun); font-size: 17px; }
     .scope-badge { display: inline-flex; gap: 8px; align-items: center; padding: 9px 13px; border: 1px solid #b7c6ae; border-radius: 99px; color: var(--ink); background: #edf2e6; font-size: 12px; font-weight: 800; }
     .scope-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--moss); box-shadow: 0 0 0 4px #dbe8d1; }
-    .hero { display: grid; grid-template-columns: 1.18fr .82fr; gap: 28px; align-items: end; padding: 62px 0 36px; }
+    .hero { display: grid; grid-template-columns: 1fr; gap: 28px; align-items: end; padding: 54px 0 28px; }
     .eyebrow { color: var(--coral); font-size: 12px; font-weight: 900; letter-spacing: .16em; }
     h1, h2, h3, p { margin: 0; }
     h1 { max-width: 760px; margin-top: 14px; font-family: Georgia, "Noto Serif KR", serif; font-size: clamp(39px, 6vw, 73px); line-height: 1.04; letter-spacing: -.065em; font-weight: 800; }
-    .hero-copy { max-width: 640px; margin-top: 20px; color: var(--ink-soft); font-size: 17px; }
-    .hero-note { padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: #fff9f0; box-shadow: var(--shadow); transform: rotate(1.2deg); }
-    .hero-note small { display: block; color: var(--coral); font-weight: 900; letter-spacing: .12em; margin-bottom: 13px; }
-    .hero-note strong { display: block; font-family: Georgia, "Noto Serif KR", serif; font-size: 25px; line-height: 1.25; }
-    .hero-note p { margin-top: 12px; color: var(--ink-soft); font-size: 13px; }
+    .hero-copy { max-width: 640px; margin-top: 18px; color: var(--ink-soft); font-size: 16px; }
     .journey-nav { display: flex; gap: 10px; overflow-x: auto; padding: 8px 0 28px; }
     .journey-nav span { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 99px; background: rgba(255, 252, 246, .62); font-size: 12px; font-weight: 800; }
     .journey-nav i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--paper-deep); color: var(--ink); font-style: normal; }
@@ -53,7 +49,7 @@
     .journey-nav span.current i { background: var(--ink); color: #fff; }
     .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .78fr); gap: 24px; align-items: start; padding-bottom: 70px; }
     .flow { display: grid; gap: 18px; }
-    .step, .map-card, .side-card { border: 1px solid var(--line); border-radius: 26px; background: var(--card); box-shadow: var(--shadow); backdrop-filter: blur(8px); }
+    .step, .map-card { border: 1px solid var(--line); border-radius: 26px; background: var(--card); box-shadow: var(--shadow); backdrop-filter: blur(8px); }
     .step { padding: 28px; position: relative; overflow: hidden; }
     .step::after { content: ""; position: absolute; width: 130px; height: 130px; right: -54px; top: -58px; border-radius: 50%; background: var(--sun-pale); opacity: .6; pointer-events: none; }
     .step-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: relative; z-index: 1; }
@@ -134,11 +130,6 @@
     .legend-dot.coral { background: var(--coral); }
     .legend-dot.teal { background: var(--water-deep); }
     .pin-detail { min-height: 75px; margin-top: 13px; padding: 12px; border-radius: 13px; color: #466b63; background: rgba(255, 251, 242, .78); font-size: 12px; }
-    .side-card { padding: 19px; background: #fff9f0; }
-    .side-card h3 { margin-bottom: 10px; }
-    .side-card p { color: var(--ink-soft); font-size: 12px; }
-    .side-card ul { margin: 11px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 12px; }
-    .side-card li + li { margin-top: 7px; }
     .footnote { padding: 17px 0 38px; border-top: 1px solid var(--line); color: #7a7065; font-size: 11px; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @media (max-width: 920px) { .hero, .workspace { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
@@ -148,72 +139,66 @@
 </head>
 <body>
   <header class="shell topbar">
-    <div class="brand"><span class="brand-mark">L</span><span>Lucera / 현장 사전점검</span></div>
+    <div class="brand"><span class="brand-mark">L</span><span>Lucera / 영암 민원</span></div>
     <div class="scope-badge">영암군 전용 베타</div>
   </header>
 
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
       <div>
-        <div class="eyebrow">CITIZEN SIGNAL → EVIDENCE → CONVERSATION</div>
-        <h1 id="page-title">영암의 민원을<br>좌표가 있는 대화로.</h1>
-        <p class="hero-copy">민원을 남기면 AI가 쟁점과 관련 기록을 묶고, 주소를 지도 핀으로 저장합니다. 그 설명을 읽은 뒤 같은 데이터와 계속 대화해 보세요.</p>
+        <div class="eyebrow">영암군 민원 사전점검</div>
+        <h1 id="page-title">민원 입력 → AI 분석 → 챗봇</h1>
+        <p class="hero-copy">주소와 민원을 입력하면 분석 결과와 지도 핀을 저장합니다.</p>
       </div>
-      <aside class="hero-note">
-        <small>오늘의 데모 범위</small>
-        <strong>전라남도 영암군<br>삼호읍 중심</strong>
-        <p>지도 핀은 기능 검증용 합성 데이터입니다. 실제 인허가나 설치 결정을 대신하지 않습니다.</p>
-      </aside>
     </section>
 
     <nav class="journey-nav" aria-label="사용자 흐름">
-      <span id="nav-1" class="current"><i>1</i> 민원 접수</span>
-      <span id="nav-2"><i>2</i> AI 분석 · 핀 저장</span>
-      <span id="nav-3"><i>3</i> 주소 기반 연속 대화</span>
+      <span id="nav-1" class="current"><i>1</i> 민원 입력</span>
+      <span id="nav-2"><i>2</i> AI 분석 · 핀</span>
+      <span id="nav-3"><i>3</i> 주소 · 챗봇</span>
     </nav>
 
     <section class="workspace">
       <div class="flow">
         <section id="step-1" class="step is-active" aria-labelledby="step-title-1">
           <div class="step-header">
-            <div><span class="step-index">1</span><div class="step-kicker">REPORT A SIGNAL</div><h2 id="step-title-1">민원을 남겨주세요</h2><p class="step-description">영암군의 구체적인 주소와 상황을 입력하면 분석에 필요한 좌표를 함께 확정합니다.</p></div>
+            <div><span class="step-index">1</span><div class="step-kicker">STEP 1</div><h2 id="step-title-1">민원 입력</h2><p class="step-description">주소와 상황을 입력하세요.</p></div>
             <span class="lock-label">지금 입력</span>
           </div>
           <div class="step-body">
             <form id="complaint-form">
               <div class="form-grid">
-                <div class="field full"><label for="complaint-address">민원 위치 주소</label><input id="complaint-address" required value="전라남도 영암군 삼호읍 가상리 45-2" placeholder="전라남도 영암군 삼호읍 도로명 또는 지번 주소"><span class="helper">영암군 주소만 접수합니다. 좌표가 없으면 주소 검색으로 확인합니다.</span></div>
-                <div class="field full"><label for="complaint-text">어떤 일이 있었나요?</label><textarea id="complaint-text" required>집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.</textarea></div>
+                <div class="field full"><label for="complaint-address">주소</label><input id="complaint-address" required value="전라남도 영암군 삼호읍 가상리 45-2" placeholder="영암군 주소"></div>
+                <div class="field full"><label for="complaint-text">민원 내용</label><textarea id="complaint-text" required>집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.</textarea></div>
               </div>
-              <details open><summary>데모 입력값 · 합성 좌표를 사용해 바로 재현하기</summary><div class="details-grid"><div class="field"><label for="complaint-lat">위도</label><input id="complaint-lat" type="number" step="0.000001" value="34.800000"></div><div class="field"><label for="complaint-lon">경도</label><input id="complaint-lon" type="number" step="0.000001" value="126.420000"></div></div></details>
-              <div class="actions"><button class="button" type="submit">민원 분석하고 좌표 저장</button><button class="button ghost" type="button" id="fill-example">예시 다시 채우기</button></div>
+              <details><summary>테스트 좌표(선택)</summary><div class="details-grid"><div class="field"><label for="complaint-lat">위도</label><input id="complaint-lat" type="number" step="0.000001" value="34.800000"></div><div class="field"><label for="complaint-lon">경도</label><input id="complaint-lon" type="number" step="0.000001" value="126.420000"></div></div></details>
+              <div class="actions"><button class="button" type="submit">저장하고 분석하기</button><button class="button ghost" type="button" id="fill-example">예시 입력</button></div>
               <div id="complaint-status" class="status" role="status" aria-live="polite"></div>
             </form>
           </div>
         </section>
 
         <section id="step-2" class="step is-locked" aria-labelledby="step-title-2">
-          <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">ANALYZE & PIN</div><h2 id="step-title-2">AI 설명과 저장된 핀</h2><p class="step-description">분석 결과, 검색된 영암 근거, 좌표가 한 기록으로 남습니다.</p></div><span id="step-2-label" class="lock-label">1단계 후 열림</span></div>
-          <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 접수하면 이곳에 AI의 첫 설명과 확인할 항목이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI의 첫 설명</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>연결된 근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="next-button" class="button secondary" type="button">다음: 주소로 사전점검 대화 열기 →</button></div></div></div>
+          <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">STEP 2</div><h2 id="step-title-2">AI 분석 · 핀 저장</h2><p class="step-description">결과와 지도 핀을 확인하세요.</p></div><span id="step-2-label" class="lock-label">대기 중</span></div>
+          <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 저장하면 AI 분석과 핀이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
         </section>
 
         <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
-          <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">KEEP ASKING</div><h2 id="step-title-3">주소를 기준으로 계속 대화</h2><p class="step-description">첫 설명을 읽은 뒤, 같은 민원·근거·좌표를 유지한 채 추가로 물어보세요.</p></div><span id="step-3-label" class="lock-label">2단계 후 열림</span></div>
-          <div class="step-body"><div id="chat-locked" class="answer-box">먼저 1단계 민원을 분석하고 2단계의 다음 버튼을 눌러 주세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">대화할 주소를 한 번 더 확인해 주세요</label><input id="chat-address" value="" placeholder="전라남도 영암군 삼호읍 도로명 또는 지번 주소"><span class="helper">영암군 주소를 입력하면 저장된 민원 근거와 연결해 대화를 시작합니다.</span></div><div class="actions"><button id="address-confirm" class="button secondary" type="button">이 주소로 챗봇 열기 →</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 사전점검 상담</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>RAG / multimodal</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="예: 배수 점검과 주민 설명회에서 다음으로 확인할 자료는 무엇인가요?" required></textarea><div class="chat-tools"><label class="upload">＋ 현장 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하</span><label class="check"><input id="include-map" type="checkbox"> VWorld 지도 영상도 함께 확인</label><button class="button" type="submit">이어서 질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
+          <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">STEP 3</div><h2 id="step-title-3">주소 입력 · 챗봇</h2><p class="step-description">같은 근거로 계속 질문하세요.</p></div><span id="step-3-label" class="lock-label">대기 중</span></div>
+          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>근거 기반 대화</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="추가 질문을 입력하세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><label class="check"><input id="include-map" type="checkbox"> 지도 영상 포함</label><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
         </section>
       </div>
 
       <aside class="map-sticky">
         <section class="map-card" aria-labelledby="map-title">
-          <div class="map-heading"><div><div class="eyebrow">YEONGAM ONLY / LIVE PINS</div><h2 id="map-title">영암군 테스트 지도</h2></div><div id="pin-counter" class="map-counter">핀 불러오는 중</div></div>
-          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 합성 데이터 지도"><div class="map-river"></div><div class="map-grid"></div></div>
+          <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
+          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 지도"><div class="map-river"></div><div class="map-grid"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 참고 사업</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
           <div id="pin-detail" class="pin-detail">핀을 선택하면 주소와 데이터 출처를 확인할 수 있습니다.</div>
         </section>
-        <section class="side-card"><h3>이 화면에서 확인할 것</h3><ul><li>민원 원문이 AI 분석과 함께 저장되는지</li><li>주소에 좌표가 붙어 영암 지도에 핀으로 나오는지</li><li>첫 답변 뒤 이미지·추가 질문이 같은 대화에서 이어지는지</li></ul><p style="margin-top:12px">파란 핀은 합성 참고 사업, 주황 핀은 방금 저장한 사용자 민원입니다.</p></section>
       </aside>
     </section>
-    <div class="footnote">Lucera는 영암군 범위의 합성·공개 기록을 근거로 사전점검 대화를 제공합니다. 합성 데이터는 실제 민원·허가 사실이 아니며, 최종 행정 판단은 담당자 확인이 필요합니다.</div>
+    <div class="footnote">영암군 전용 · 합성 데이터 기반</div>
   </main>
 
   <script>
