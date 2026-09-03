@@ -923,6 +923,65 @@ CREATE TABLE IF NOT EXISTS search_request (
     metadata_json TEXT NOT NULL DEFAULT '{}'
 );
 
+-- Product flow tables. These are deliberately separate from the historical
+-- evidence tables: a user complaint is an input artifact, not a public record.
+CREATE TABLE IF NOT EXISTS complaint_submission (
+    complaint_id TEXT PRIMARY KEY,
+    conversation_id TEXT NOT NULL,
+    raw_text TEXT NOT NULL,
+    title TEXT NOT NULL DEFAULT '영암군 민원',
+    address TEXT NOT NULL,
+    normalized_address TEXT NOT NULL,
+    province TEXT,
+    city_county TEXT NOT NULL CHECK (city_county = '영암군'),
+    eup_myeon TEXT,
+    ri TEXT,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    geocode_status TEXT NOT NULL DEFAULT 'unresolved',
+    ai_summary TEXT NOT NULL DEFAULT '',
+    issue_codes_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'received',
+    data_origin TEXT NOT NULL DEFAULT 'user_input',
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_conversation (
+    conversation_id TEXT PRIMARY KEY,
+    complaint_id TEXT NOT NULL REFERENCES complaint_submission(complaint_id) ON DELETE CASCADE,
+    address TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_message (
+    message_id TEXT PRIMARY KEY,
+    conversation_id TEXT NOT NULL REFERENCES chat_conversation(conversation_id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS complaint_evidence (
+    complaint_id TEXT NOT NULL REFERENCES complaint_submission(complaint_id) ON DELETE CASCADE,
+    evidence_id TEXT NOT NULL,
+    evidence_type TEXT NOT NULL DEFAULT 'meeting_evidence',
+    rank INTEGER NOT NULL DEFAULT 1,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (complaint_id, evidence_id, evidence_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_complaint_scope ON complaint_submission(city_county, created_at);
+CREATE INDEX IF NOT EXISTS idx_complaint_coordinates ON complaint_submission(latitude, longitude);
+CREATE INDEX IF NOT EXISTS idx_chat_message_conversation ON chat_message(conversation_id, created_at);
+
 CREATE TABLE IF NOT EXISTS review_task (
     review_task_id TEXT PRIMARY KEY,
     target_type TEXT NOT NULL,

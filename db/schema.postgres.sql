@@ -906,6 +906,57 @@ CREATE TABLE IF NOT EXISTS search_request (
     metadata jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
+CREATE TABLE IF NOT EXISTS complaint_submission (
+    complaint_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id uuid NOT NULL,
+    raw_text text NOT NULL,
+    title text NOT NULL DEFAULT '영암군 민원',
+    address text NOT NULL,
+    normalized_address text NOT NULL,
+    province text,
+    city_county text NOT NULL CHECK (city_county = '영암군'),
+    eup_myeon text,
+    ri text,
+    geom geography(Point, 4326) NOT NULL,
+    geocode_status text NOT NULL DEFAULT 'unresolved',
+    ai_summary text NOT NULL DEFAULT '',
+    issue_codes jsonb NOT NULL DEFAULT '[]'::jsonb,
+    status text NOT NULL DEFAULT 'received',
+    data_origin text NOT NULL DEFAULT 'user_input',
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS chat_conversation (
+    conversation_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    complaint_id uuid NOT NULL REFERENCES complaint_submission(complaint_id) ON DELETE CASCADE,
+    address text NOT NULL,
+    geom geography(Point, 4326) NOT NULL,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS chat_message (
+    message_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id uuid NOT NULL REFERENCES chat_conversation(conversation_id) ON DELETE CASCADE,
+    role text NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content text NOT NULL,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS complaint_evidence (
+    complaint_id uuid NOT NULL REFERENCES complaint_submission(complaint_id) ON DELETE CASCADE,
+    evidence_id text NOT NULL,
+    evidence_type text NOT NULL DEFAULT 'meeting_evidence',
+    rank integer NOT NULL DEFAULT 1,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (complaint_id, evidence_id, evidence_type)
+);
+
 CREATE TABLE IF NOT EXISTS review_task (
     review_task_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     target_type text NOT NULL,

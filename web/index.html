@@ -3,506 +3,293 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>루체라 · 지역 분쟁이력 조회</title>
+  <title>Lucera · 영암 민원 사전점검</title>
   <style>
     :root {
-      --ink: #112a3c;
-      --muted: #6c7f8c;
-      --line: #cfdee5;
-      --paper: #f4f7f5;
-      --white: #ffffff;
-      --green: #147b5e;
-      --green-deep: #0d4e3e;
-      --green-soft: #e5f2ed;
-      --blue-soft: #e8f0f5;
-      --amber: #e6ae4d;
-      --red: #cc5a55;
+      --ink: #173d36;
+      --ink-soft: #40665d;
+      --paper: #f4eee4;
+      --paper-deep: #e8dfd1;
+      --card: rgba(255, 252, 246, .88);
+      --line: #d4c9b9;
+      --sun: #e5b65a;
+      --sun-pale: #f6e4af;
+      --water: #8cb9bb;
+      --water-deep: #397d7d;
+      --coral: #d2765d;
+      --moss: #819a63;
+      --shadow: 0 18px 50px rgba(56, 54, 40, .10);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Noto Sans KR", "Malgun Gothic", sans-serif; line-height: 1.6; }
-    button, input { font: inherit; }
-    .shell { max-width: 1180px; margin: 0 auto; padding: 28px 28px 72px; }
-    header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
-    .brand { display: flex; gap: 12px; align-items: center; font-weight: 800; letter-spacing: -.03em; }
-    .mark { width: 30px; height: 30px; border-radius: 50%; background: var(--green); position: relative; box-shadow: 0 0 0 7px var(--green-soft); }
-    .mark::after { content: ""; position: absolute; width: 8px; height: 8px; background: var(--white); border-radius: 50%; left: 11px; top: 11px; }
-    .source-note { color: var(--muted); font-size: 13px; }
-    .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; padding: 76px 0 52px; align-items: end; }
-    .eyebrow { color: var(--green); font-size: 14px; font-weight: 800; letter-spacing: .06em; margin-bottom: 18px; }
-    h1 { max-width: 650px; margin: 0; font-size: clamp(40px, 6vw, 72px); line-height: 1.08; letter-spacing: -.065em; font-weight: 400; }
-    .hero p { max-width: 560px; color: var(--muted); font-size: 17px; margin: 24px 0 0; }
-    .hero-aside { border-left: 3px solid var(--green); padding: 8px 0 8px 22px; color: var(--green-deep); }
-    .hero-aside strong { display: block; font-size: 21px; font-weight: 600; margin-bottom: 9px; }
-    .hero-aside span { color: var(--muted); font-size: 14px; }
-    .search-panel { background: var(--ink); color: var(--white); padding: 30px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: end; }
-    .field label { display: block; color: #a9c5c7; font-size: 13px; margin-bottom: 8px; }
-    .field input { width: 100%; border: 1px solid #4b6877; background: #1a384b; color: var(--white); padding: 15px 17px; outline: none; }
-    .field input:focus { border-color: #78c6a8; box-shadow: 0 0 0 3px rgba(120, 198, 168, .2); }
-    .search-panel button { border: 0; background: var(--green); color: var(--white); padding: 15px 26px; cursor: pointer; font-weight: 800; white-space: nowrap; }
-    .search-panel button:hover { background: #1a906e; }
-    .search-panel button:focus-visible { outline: 3px solid #f5c86e; outline-offset: 3px; }
-    .small-note { grid-column: 1 / -1; color: #a9b9bd; font-size: 12px; margin-top: -3px; }
-    .chat-section { margin: 58px 0 30px; }
-    .chat-section h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -.045em; }
-    .chat-section > p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-    .chat-panel { background: #0d4e3e; color: var(--white); padding: 26px 30px; display: grid; grid-template-columns: 1.4fr .8fr .8fr .8fr auto; gap: 14px; align-items: end; }
-    .chat-panel .field-wide { grid-column: 1 / span 2; }
-    .map-block { grid-column: 1 / -1; }
-    .map-strip { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-    .map-strip figure { margin: 0; flex: 1 1 220px; max-width: 320px; }
-    .map-strip img { width: 100%; height: auto; display: block; border: 1px solid #4b6877; }
-    .map-strip figcaption { font-size: 12px; opacity: .75; margin-top: 6px; }
-    .map-note { opacity: .75; }
-    .chat-panel textarea, .chat-panel input { width: 100%; border: 1px solid #5d9785; background: #153f36; color: var(--white); padding: 13px 15px; outline: none; }
-    .chat-panel textarea { min-height: 72px; resize: vertical; line-height: 1.55; }
-    .chat-panel textarea:focus, .chat-panel input:focus { border-color: #f5c86e; box-shadow: 0 0 0 3px rgba(245, 200, 110, .18); }
-    .chat-panel button { border: 0; background: #f1bd58; color: #19372f; padding: 14px 21px; cursor: pointer; font-weight: 800; white-space: nowrap; }
-    .chat-panel button:hover { background: #ffd47d; }
-    .chat-result { display: none; margin-top: 18px; border: 1px solid var(--line); background: var(--white); }
-    .chat-result.show { display: block; }
-    .chat-result-head { padding: 20px 24px; background: #f0f7f3; border-bottom: 1px solid var(--line); }
-    .chat-result-head strong { color: var(--green-deep); font-size: 20px; }
-    .chat-answer { white-space: pre-wrap; padding: 20px 24px; font-size: 15px; line-height: 1.8; }
-    .chat-grid { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
-    .chat-block { padding: 18px 22px; border-right: 1px solid var(--line); }
-    .chat-block:nth-child(2n) { border-right: 0; }
-    .chat-block h3 { margin: 0 0 10px; font-size: 14px; color: var(--green-deep); }
-    .chat-block ul { margin: 0; padding-left: 19px; color: var(--muted); font-size: 13px; }
-    .chat-block li { margin: 6px 0; }
-    .chat-badge { display: inline-flex; padding: 3px 8px; background: #fff4dc; color: #805d17; font-size: 11px; margin-left: 8px; vertical-align: middle; }
-    .status { min-height: 30px; padding: 19px 0 8px; color: var(--muted); font-size: 14px; }
-    .status.error { color: var(--red); }
-    .summary { display: none; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 30px 0 42px; }
-    .summary.show { display: grid; }
-    .metric { padding: 18px 20px 16px; border-right: 1px solid var(--line); }
-    .metric:last-child { border-right: 0; }
-    .metric strong { display: block; color: var(--green-deep); font-size: 26px; font-weight: 500; }
-    .metric span { color: var(--muted); font-size: 12px; }
-    .debug-panel { margin: 0 0 38px; border: 1px solid #b9cfd2; background: #102d3d; color: #e8f4f0; }
-    .debug-head { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 17px 20px 12px; border-bottom: 1px solid #355364; }
-    .debug-head h2 { margin: 0; font-size: 17px; font-weight: 700; }
-    .debug-head span { color: #a9c5c7; font-size: 12px; }
-    .debug-log { max-height: 560px; overflow: auto; margin: 0; padding: 17px 20px 20px; color: #d8eee7; font: 12px/1.75 Consolas, "Malgun Gothic", monospace; white-space: pre-wrap; word-break: break-word; }
-    .raw-json { border-top: 1px solid #355364; }
-    .raw-json summary { cursor: pointer; padding: 12px 20px; color: #a9c5c7; font-size: 12px; }
-    .raw-json pre { max-height: 480px; overflow: auto; margin: 0; padding: 0 20px 20px; color: #d8eee7; font: 11px/1.55 Consolas, "Malgun Gothic", monospace; white-space: pre-wrap; word-break: break-word; }
-    .results { display: grid; gap: 18px; }
-    .case-groups { display: grid; gap: 18px; margin-top: 44px; }
-    .case-groups > h2 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
-    .case-group { background: var(--white); border: 1px solid var(--line); padding: 22px 24px; }
-    .case-group-head { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 14px; }
-    .case-group h3 { margin: 0; font-size: 17px; line-height: 1.4; }
-    .case-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
-    .case-paragraph { border-top: 1px solid #e4ecef; padding: 11px 0; }
-    .case-paragraph summary { cursor: pointer; color: var(--green-deep); font-size: 13px; }
-    .case-paragraph summary::marker { color: var(--green); }
-    .original-text { margin: 10px 0 5px; padding: 12px 14px; background: #f7faf8; white-space: pre-wrap; font-size: 14px; line-height: 1.75; }
-    .paragraph-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: 11px; }
-    .paragraph-meta a { color: var(--green); text-decoration: none; }
-    .paragraph-meta a:hover { text-decoration: underline; }
-    .result { background: var(--white); border: 1px solid var(--line); border-left: 5px solid var(--green); padding: 24px 26px; }
-    .result[data-group="comparative_case"] { border-left-color: var(--amber); }
-    .result-top { display: flex; justify-content: space-between; gap: 18px; align-items: start; }
-    .badge { display: inline-flex; padding: 3px 9px; font-size: 12px; color: var(--green-deep); background: var(--green-soft); margin-bottom: 9px; }
-    .result[data-group="comparative_case"] .badge { color: #805d17; background: #fff4dc; }
-    .result h2 { margin: 0; font-size: 19px; line-height: 1.35; letter-spacing: -.025em; font-weight: 700; }
-    .date { color: var(--muted); font-size: 13px; white-space: nowrap; }
-    .evidence { margin: 18px 0 15px; font-size: 15px; line-height: 1.8; }
-    .case-link { margin: 14px 0 0; padding: 10px 12px; background: #f1f7f4; color: var(--green-deep); font-size: 12px; }
-    .case-link strong { display: block; font-size: 13px; }
-    .case-link span { color: var(--muted); }
-    .meta { display: flex; flex-wrap: wrap; gap: 7px 17px; color: var(--muted); font-size: 12px; padding-top: 14px; border-top: 1px solid #e4ecef; }
-    .issue-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 13px; }
-    .issue { padding: 3px 8px; background: var(--blue-soft); color: #32627a; font-size: 12px; }
-    .issue.opposition { background: #f8e9e7; color: #9b403d; }
-    .issue.support { background: var(--green-soft); color: var(--green-deep); }
-    .source { display: inline-block; margin-top: 16px; color: var(--green); font-size: 13px; text-decoration: none; }
-    .source:hover { text-decoration: underline; }
-    .empty { padding: 60px 20px; border-top: 1px solid var(--line); color: var(--muted); text-align: center; }
-    footer { margin-top: 68px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 17px; }
-    @media (max-width: 760px) {
-      .shell { padding: 20px 17px 55px; }
-      .hero { grid-template-columns: 1fr; gap: 28px; padding: 50px 0 33px; }
-      .hero-aside { max-width: 500px; }
-      .search-panel { grid-template-columns: 1fr; padding: 22px; }
-      .chat-panel { grid-template-columns: 1fr 1fr; padding: 22px; }
-      .chat-panel .field-wide { grid-column: 1 / -1; }
-      .chat-panel button { grid-column: 1 / -1; }
-      .chat-grid { grid-template-columns: 1fr; }
-      .chat-block { border-right: 0; border-bottom: 1px solid var(--line); }
-      .chat-block:last-child { border-bottom: 0; }
-      .summary { grid-template-columns: repeat(2, 1fr); }
-      .metric:nth-child(2) { border-right: 0; }
-      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
-      .result-top { display: block; }
-      .date { display: block; margin-top: 8px; }
-      .case-group-head { display: block; }
-      .case-count { display: block; margin-top: 5px; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(circle at 8% 0%, #fff8ee 0, var(--paper) 38%, #e8e0d5 100%);
+      font-family: "Pretendard Variable", "Noto Sans KR", system-ui, sans-serif;
+      line-height: 1.55;
     }
-    /* Field-audit visual system: a quiet paper surface, deep survey green,
-       and one amber signal for decisions that need human review. */
-    :root {
-      --ink: #142f32;
-      --muted: #637977;
-      --line: #cbd6cc;
-      --paper: #e9eee7;
-      --white: #fbfcf8;
-      --deep: #0d292c;
-      --green: #3d8c68;
-      --green-deep: #174c42;
-      --green-soft: #dcece0;
-      --signal: #e6b35e;
-      --signal-soft: #fbf0d6;
-      --risk: #d87561;
-      --blue-soft: #e4edf0;
-    }
-    body { background: var(--paper); color: var(--ink); }
-    .shell { max-width: 1320px; padding: 18px 32px 76px; }
-    header { background: var(--deep); color: var(--white); border: 0; padding: 17px 22px; margin: 0; }
-    .brand { color: var(--white); letter-spacing: -.04em; }
-    .mark { width: 29px; height: 29px; border-radius: 3px; background: var(--signal); box-shadow: none; transform: rotate(45deg); }
-    .mark::after { width: 7px; height: 7px; left: 11px; top: 11px; background: var(--deep); }
-    .source-note { color: #a9c1b9; font-size: 11px; letter-spacing: .06em; }
-    .hero { position: relative; overflow: hidden; grid-template-columns: 1.08fr .92fr; gap: 50px; margin: 0; padding: 74px 70px 76px; background: var(--deep); color: var(--white); align-items: center; }
-    .hero::after { content: ""; position: absolute; inset: 0 0 0 55%; opacity: .14; background-image: linear-gradient(rgba(210,230,216,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(210,230,216,.5) 1px, transparent 1px); background-size: 38px 38px; mask-image: linear-gradient(90deg, transparent, #000 42%); pointer-events: none; }
-    .hero > * { position: relative; z-index: 1; }
-    .eyebrow { color: var(--signal); font-size: 13px; letter-spacing: .02em; margin-bottom: 17px; }
-    h1 { max-width: 700px; color: #f4f4e9; font-family: "Noto Serif KR", Georgia, serif; font-size: clamp(42px, 6vw, 76px); line-height: 1.08; letter-spacing: -.08em; }
-    .hero p { max-width: 590px; color: #abc0ba; font-size: 16px; margin-top: 25px; }
-    .hero-aside { min-height: 310px; border: 1px solid #42625c; border-left: 1px solid #42625c; border-radius: 2px 28px 2px 28px; padding: 23px; background: #153638; color: var(--white); }
-    .hero-aside strong { color: #f4f4e9; font-family: "Noto Serif KR", Georgia, serif; font-size: 24px; font-weight: 500; margin-bottom: 7px; }
-    .hero-aside span { color: #a9c1b9; }
-    .signal-card { display: flex; height: 100%; flex-direction: column; justify-content: space-between; }
-    .signal-card-head { display: flex; justify-content: space-between; color: var(--signal) !important; font-size: 10px !important; letter-spacing: .08em; }
-    .signal-card-head span:last-child { color: #9ebbb2 !important; }
-    .signal-visual { display: flex; align-items: center; gap: 22px; padding: 25px 0 20px; }
-    .signal-ring { width: 124px; height: 124px; flex: 0 0 auto; display: grid; place-content: center; text-align: center; border: 1px solid #70958b; border-radius: 50%; box-shadow: inset 0 0 0 11px #1d4542, inset 0 0 0 12px #70958b; }
-    .signal-ring strong { margin: 0; font-family: inherit; font-size: 28px; line-height: 1; }
-    .signal-ring small { color: var(--signal); font-size: 11px; margin-top: 7px; }
-    .signal-copy strong { font-family: inherit; font-size: 15px; margin-bottom: 5px; }
-    .signal-copy span { display: block; max-width: 210px; line-height: 1.55; }
-    .signal-legend { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #42625c; padding-top: 15px; gap: 12px; }
-    .signal-legend b { display: block; color: #f4f4e9; font-size: 17px; font-weight: 500; }
-    .signal-legend span { font-size: 11px; }
-    .chat-section { margin: 44px 0 0; }
-    .chat-section h2 { color: var(--ink); font-family: "Noto Serif KR", Georgia, serif; font-size: 32px; font-weight: 500; letter-spacing: -.06em; }
-    .chat-section > p { max-width: 640px; color: var(--muted); font-size: 14px; }
-    .chat-panel { grid-template-columns: 1.55fr .95fr .95fr .95fr auto; gap: 16px; padding: 27px 28px 23px; background: var(--white); color: var(--ink); border: 1px solid var(--line); border-top: 4px solid var(--green); border-radius: 2px; box-shadow: 0 12px 32px rgba(28, 56, 47, .07); }
-    .chat-panel .field label { color: var(--muted); font-size: 12px; }
-    .chat-panel textarea, .chat-panel input { border: 1px solid #bdccc1; background: #f2f6f0; color: var(--ink); padding: 13px 14px; }
-    .chat-panel textarea::placeholder, .chat-panel input::placeholder { color: #8b9b95; }
-    .chat-panel textarea:focus, .chat-panel input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(61, 140, 104, .16); }
-    .chat-panel button { background: var(--signal); color: #243d35; padding: 14px 20px; border-radius: 1px; }
-    .chat-panel button:hover { background: #f1c776; }
-    .chat-panel .small-note { color: var(--muted); }
-    .chat-status { padding: 14px 2px 4px; }
-    .chat-result { margin-top: 17px; border: 1px solid var(--line); border-radius: 2px; box-shadow: 0 10px 28px rgba(28, 56, 47, .06); }
-    .chat-result-head { background: var(--green-deep); color: var(--white); border: 0; padding: 21px 25px 18px; }
-    .chat-result-head strong { color: #f4f4e9; font-family: "Noto Serif KR", Georgia, serif; font-size: 23px; font-weight: 500; }
-    .chat-result-head > div { color: #b4cbc0; font-size: 12px; margin-top: 5px; }
-    .chat-answer { background: #f8faf5; padding: 23px 25px; font-size: 15px; }
-    .chat-grid { background: var(--white); }
-    .chat-block { min-height: 150px; padding: 20px 23px; border-color: var(--line); }
-    .chat-block h3 { color: var(--green-deep); font-size: 13px; letter-spacing: -.01em; }
-    .chat-block ul { color: var(--muted); }
-    .chat-block li { margin: 7px 0; }
-    .chat-block li strong { color: var(--ink); }
-    .chat-badge { background: var(--signal-soft); color: #7b5b1b; }
-    .chat-badge.fail { background: #f8e3dd; color: #93493c; }
-    .chat-badge.pass { background: var(--green-soft); color: var(--green-deep); }
-    .record-search { margin-top: 66px; padding-top: 32px; border-top: 1px solid var(--line); }
-    .record-search h2 { margin: 0 0 7px; color: var(--ink); font-family: "Noto Serif KR", Georgia, serif; font-size: 29px; font-weight: 500; letter-spacing: -.06em; }
-    .record-search p { margin: 0 0 17px; color: var(--muted); font-size: 14px; }
-    .search-panel { grid-template-columns: 1fr auto; padding: 21px 23px; background: #dbe6dc; color: var(--ink); border: 1px solid var(--line); }
-    .search-panel .field label { color: var(--muted); }
-    .search-panel .field input { border-color: #b9c9bc; background: var(--white); color: var(--ink); }
-    .search-panel .field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(61, 140, 104, .14); }
-    .search-panel button { background: var(--green-deep); color: var(--white); }
-    .search-panel button:hover { background: #236555; }
-    .small-note { color: var(--muted); }
-    .status { color: var(--muted); }
-    .summary { margin-top: 22px; margin-bottom: 34px; background: var(--white); border: 1px solid var(--line); }
-    .metric { padding: 17px 19px 15px; border-color: var(--line); }
-    .metric strong { color: var(--green-deep); font-family: "Noto Serif KR", Georgia, serif; font-size: 29px; }
-    .metric span { color: var(--muted); }
-    .debug-panel { border: 0; border-radius: 2px; background: var(--deep); }
-    .results { gap: 13px; }
-    .result { border: 1px solid var(--line); border-left: 4px solid var(--green); padding: 21px 23px; box-shadow: 0 5px 16px rgba(28, 56, 47, .035); }
-    .result h2 { color: var(--ink); }
-    .badge { background: var(--green-soft); color: var(--green-deep); }
-    .case-groups { margin-top: 37px; }
-    .case-group { border: 1px solid var(--line); padding: 21px 23px; }
-    footer { margin-top: 58px; padding-top: 16px; }
-    @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; padding: 55px 34px 60px; }
-      .hero-aside { min-height: 260px; }
-      .chat-panel { grid-template-columns: 1fr 1fr; }
-      .chat-panel button { grid-column: 1 / -1; justify-self: start; }
-    }
-    @media (max-width: 760px) {
-      .shell { padding: 12px 14px 52px; }
-      header { padding: 15px 17px; }
-      .source-note { font-size: 9px; }
-      .hero { padding: 46px 24px 48px; }
-      h1 { font-size: clamp(38px, 12vw, 57px); }
-      .hero p { font-size: 14px; }
-      .signal-visual { gap: 14px; }
-      .signal-ring { width: 100px; height: 100px; }
-      .signal-legend b { font-size: 15px; }
-      .chat-section { margin-top: 35px; }
-      .chat-section h2, .record-search h2 { font-size: 26px; }
-      .chat-panel { grid-template-columns: 1fr 1fr; padding: 21px; }
-      .chat-panel button { width: 100%; justify-self: stretch; }
-      .record-search { margin-top: 49px; }
-      .search-panel { padding: 18px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
-    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 24px 0 12px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.04em; font-size: 20px; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px 11px 11px 4px; color: #fff9ed; background: var(--ink); box-shadow: 5px 5px 0 var(--sun); font-size: 17px; }
+    .scope-badge { display: inline-flex; gap: 8px; align-items: center; padding: 9px 13px; border: 1px solid #b7c6ae; border-radius: 99px; color: var(--ink); background: #edf2e6; font-size: 12px; font-weight: 800; }
+    .scope-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--moss); box-shadow: 0 0 0 4px #dbe8d1; }
+    .hero { display: grid; grid-template-columns: 1.18fr .82fr; gap: 28px; align-items: end; padding: 62px 0 36px; }
+    .eyebrow { color: var(--coral); font-size: 12px; font-weight: 900; letter-spacing: .16em; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 760px; margin-top: 14px; font-family: Georgia, "Noto Serif KR", serif; font-size: clamp(39px, 6vw, 73px); line-height: 1.04; letter-spacing: -.065em; font-weight: 800; }
+    .hero-copy { max-width: 640px; margin-top: 20px; color: var(--ink-soft); font-size: 17px; }
+    .hero-note { padding: 24px; border: 1px solid var(--line); border-radius: 22px; background: #fff9f0; box-shadow: var(--shadow); transform: rotate(1.2deg); }
+    .hero-note small { display: block; color: var(--coral); font-weight: 900; letter-spacing: .12em; margin-bottom: 13px; }
+    .hero-note strong { display: block; font-family: Georgia, "Noto Serif KR", serif; font-size: 25px; line-height: 1.25; }
+    .hero-note p { margin-top: 12px; color: var(--ink-soft); font-size: 13px; }
+    .journey-nav { display: flex; gap: 10px; overflow-x: auto; padding: 8px 0 28px; }
+    .journey-nav span { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 99px; background: rgba(255, 252, 246, .62); font-size: 12px; font-weight: 800; }
+    .journey-nav i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--paper-deep); color: var(--ink); font-style: normal; }
+    .journey-nav span.current { border-color: var(--ink); color: var(--ink); background: var(--sun-pale); }
+    .journey-nav span.current i { background: var(--ink); color: #fff; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .78fr); gap: 24px; align-items: start; padding-bottom: 70px; }
+    .flow { display: grid; gap: 18px; }
+    .step, .map-card, .side-card { border: 1px solid var(--line); border-radius: 26px; background: var(--card); box-shadow: var(--shadow); backdrop-filter: blur(8px); }
+    .step { padding: 28px; position: relative; overflow: hidden; }
+    .step::after { content: ""; position: absolute; width: 130px; height: 130px; right: -54px; top: -58px; border-radius: 50%; background: var(--sun-pale); opacity: .6; pointer-events: none; }
+    .step-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: relative; z-index: 1; }
+    .step-index { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 14px; border-radius: 12px 12px 12px 4px; color: white; background: var(--ink); font-weight: 900; }
+    .step-kicker { color: var(--coral); font-size: 11px; font-weight: 900; letter-spacing: .13em; }
+    h2 { margin-top: 4px; font-family: Georgia, "Noto Serif KR", serif; font-size: 30px; line-height: 1.12; letter-spacing: -.05em; }
+    h3 { font-size: 16px; letter-spacing: -.03em; }
+    .step-description { margin-top: 8px; color: var(--ink-soft); font-size: 13px; }
+    .lock-label { flex: 0 0 auto; padding: 7px 10px; color: #786d60; border: 1px solid var(--line); border-radius: 99px; background: #f1ebe1; font-size: 11px; font-weight: 800; }
+    .step.is-active { border-color: #86aaa1; box-shadow: 0 22px 60px rgba(23, 61, 54, .12); }
+    .step.is-active .lock-label { color: var(--water-deep); border-color: #afd0c9; background: #eaf5f0; }
+    .step.is-locked .step-body { opacity: .55; filter: saturate(.55); }
+    .step-body { position: relative; z-index: 1; margin-top: 22px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: grid; gap: 7px; }
+    .field.full { grid-column: 1 / -1; }
+    label { color: var(--ink-soft); font-size: 12px; font-weight: 900; }
+    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 13px; outline: none; color: var(--ink); background: #fffdf8; transition: border-color .2s, box-shadow .2s; }
+    input { padding: 12px 13px; }
+    textarea { min-height: 124px; padding: 13px; resize: vertical; }
+    input:focus, textarea:focus { border-color: var(--water-deep); box-shadow: 0 0 0 4px rgba(57, 125, 125, .12); }
+    .helper { color: #83786b; font-size: 11px; }
+    details { margin-top: 14px; border: 1px dashed #bfb3a5; border-radius: 13px; padding: 11px 13px; background: rgba(246, 238, 224, .66); }
+    summary { cursor: pointer; color: var(--ink-soft); font-size: 12px; font-weight: 800; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+    .button { border: 0; border-radius: 13px; padding: 12px 16px; color: #fff; background: var(--ink); font-weight: 900; box-shadow: 4px 4px 0 rgba(229, 182, 90, .75); transition: transform .15s, box-shadow .15s; }
+    .button:hover { transform: translateY(-2px); box-shadow: 4px 6px 0 rgba(229, 182, 90, .75); }
+    .button.secondary { color: var(--ink); background: var(--sun); }
+    .button.ghost { color: var(--ink-soft); background: transparent; border: 1px solid var(--line); box-shadow: none; }
+    .button:disabled { cursor: not-allowed; transform: none; opacity: .55; box-shadow: none; }
+    .status { min-height: 22px; margin-top: 12px; color: var(--ink-soft); font-size: 12px; }
+    .status.error { color: #a84b3a; }
+    .status.success { color: var(--water-deep); }
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .result-card { border: 1px solid #ded3c4; border-radius: 16px; padding: 15px; background: #fffaf1; }
+    .result-card .mini-label { color: var(--coral); font-size: 10px; font-weight: 900; letter-spacing: .11em; }
+    .result-card strong { display: block; margin-top: 5px; font-size: 18px; }
+    .answer-box { white-space: pre-wrap; border-left: 4px solid var(--sun); padding: 15px 17px; border-radius: 0 15px 15px 0; color: #324e48; background: #f8f0df; font-size: 13px; }
+    .evidence-list { display: grid; gap: 9px; margin-top: 13px; }
+    .evidence-item { padding: 12px 13px; border: 1px solid #ded3c4; border-radius: 13px; background: #fffcf6; font-size: 12px; }
+    .evidence-item strong { display: block; margin-bottom: 3px; }
+    .evidence-item span { color: var(--ink-soft); }
+    .chat-shell { border: 1px solid #c4d8d1; border-radius: 18px; overflow: hidden; background: #f8fbf6; }
+    .chat-head { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; color: #fff; background: var(--ink); }
+    .chat-head small { color: #b5d5c8; }
+    .chat-thread { display: grid; gap: 12px; max-height: 420px; overflow: auto; padding: 16px; background: linear-gradient(135deg, #edf4ed, #f8f3e9); }
+    .bubble { max-width: 87%; padding: 12px 14px; border-radius: 16px 16px 16px 4px; color: var(--ink); background: #fffdf7; box-shadow: 0 5px 17px rgba(23, 61, 54, .07); white-space: pre-wrap; font-size: 13px; }
+    .bubble.user { justify-self: end; border-radius: 16px 16px 4px 16px; color: #fff; background: var(--water-deep); }
+    .bubble small { display: block; margin-bottom: 4px; color: #788e84; font-size: 10px; font-weight: 900; }
+    .bubble.user small { color: #c8e8df; }
+    .chat-form { padding: 15px; border-top: 1px solid #c4d8d1; background: #fffdf7; }
+    .chat-form textarea { min-height: 78px; }
+    .chat-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 10px; }
+    .upload { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; color: var(--ink-soft); background: #f7f0e4; font-size: 11px; font-weight: 800; }
+    .upload input { display: none; }
+    .check { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); font-size: 11px; }
+    .check input { width: auto; }
+    .map-sticky { position: sticky; top: 16px; display: grid; gap: 16px; }
+    .map-card { padding: 18px; background: #d9e8df; }
+    .map-heading { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 14px; }
+    .map-heading .eyebrow { color: var(--water-deep); }
+    .map-heading h2 { font-size: 25px; }
+    .map-counter { color: #fff; background: var(--water-deep); padding: 7px 10px; border-radius: 10px; font-size: 11px; font-weight: 900; }
+    .map-canvas { position: relative; aspect-ratio: 1.1; overflow: hidden; border: 1px solid #a9c6bb; border-radius: 19px; background: #a6cbc0; }
+    .map-canvas::before { content: ""; position: absolute; inset: 0; opacity: .55; background: repeating-linear-gradient(25deg, transparent 0 29px, rgba(255,255,255,.22) 30px 31px), repeating-linear-gradient(115deg, transparent 0 37px, rgba(63,128,118,.18) 38px 39px); }
+    .map-canvas::after { content: "영암군 · 합성/저장 핀"; position: absolute; left: 14px; top: 12px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.6); border-radius: 7px; color: #215a57; background: rgba(238, 250, 240, .76); font-size: 10px; font-weight: 900; letter-spacing: .05em; }
+    .map-river { position: absolute; inset: 20% -10% 10% 50%; border: 20px solid rgba(255,255,255,.32); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(-18deg); }
+    .map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(30, 93, 84, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 93, 84, .12) 1px, transparent 1px); background-size: 20% 20%; }
+    .map-pin { position: absolute; z-index: 3; width: 25px; height: 25px; padding: 0; border: 3px solid #fff9ed; border-radius: 50% 50% 50% 5px; transform: translate(-50%, -100%) rotate(-45deg); box-shadow: 0 4px 10px rgba(23,61,54,.28); }
+    .map-pin span { display: block; width: 9px; height: 9px; margin: 5px; border-radius: 50%; background: #fff; }
+    .map-pin.complaint { background: var(--coral); }
+    .map-pin.permit { background: var(--water-deep); }
+    .map-pin:hover, .map-pin:focus { outline: 4px solid rgba(229,182,90,.55); }
+    .map-key { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 11px; color: #45685f; font-size: 11px; font-weight: 800; }
+    .map-key span { display: inline-flex; gap: 6px; align-items: center; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .legend-dot.coral { background: var(--coral); }
+    .legend-dot.teal { background: var(--water-deep); }
+    .pin-detail { min-height: 75px; margin-top: 13px; padding: 12px; border-radius: 13px; color: #466b63; background: rgba(255, 251, 242, .78); font-size: 12px; }
+    .side-card { padding: 19px; background: #fff9f0; }
+    .side-card h3 { margin-bottom: 10px; }
+    .side-card p { color: var(--ink-soft); font-size: 12px; }
+    .side-card ul { margin: 11px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 12px; }
+    .side-card li + li { margin-top: 7px; }
+    .footnote { padding: 17px 0 38px; border-top: 1px solid var(--line); color: #7a7065; font-size: 11px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 920px) { .hero, .workspace { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
+    @media (max-width: 560px) { .shell { width: min(100% - 24px, 1240px); } .hero { padding-top: 35px; } .step { padding: 21px; border-radius: 20px; } .form-grid, .result-grid, .details-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } h1 { font-size: 43px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
   </style>
 </head>
 <body>
+  <header class="shell topbar">
+    <div class="brand"><span class="brand-mark">L</span><span>Lucera / 현장 사전점검</span></div>
+    <div class="scope-badge">영암군 전용 베타</div>
+  </header>
+
   <main class="shell">
-    <header>
-      <div class="brand"><span class="mark" aria-hidden="true"></span><span>루체라</span></div>
-      <div class="source-note">LOCAL RAG · 지역 입지 사전점검</div>
-    </header>
-    <section class="hero">
+    <section class="hero" aria-labelledby="page-title">
       <div>
-        <div class="eyebrow">태양광 발전 · 설치 예정지 브리핑</div>
-        <h1>이 땅에 놓기 전에,<br>먼저 기록을 읽습니다.</h1>
-        <p>주소와 사업 규모를 입력하면 과거 민원, 처리 과정, 입지 규칙을 한 장의 검토 기록으로 묶어 보여드립니다.</p>
+        <div class="eyebrow">CITIZEN SIGNAL → EVIDENCE → CONVERSATION</div>
+        <h1 id="page-title">영암의 민원을<br>좌표가 있는 대화로.</h1>
+        <p class="hero-copy">민원을 남기면 AI가 쟁점과 관련 기록을 묶고, 주소를 지도 핀으로 저장합니다. 그 설명을 읽은 뒤 같은 데이터와 계속 대화해 보세요.</p>
       </div>
-      <div class="hero-aside">
-        <div class="signal-card">
-          <div class="signal-card-head"><span>FIELD SIGNAL</span><span>LOCAL / READY</span></div>
-          <div class="signal-visual">
-            <div class="signal-ring"><strong>근거</strong><small>LINKED</small></div>
-            <div class="signal-copy"><strong>판정보다 먼저 확인</strong><span>회의명·날짜·페이지·원문을 따라가며 설치 전 검토 항목을 만듭니다.</span></div>
+      <aside class="hero-note">
+        <small>오늘의 데모 범위</small>
+        <strong>전라남도 영암군<br>삼호읍 중심</strong>
+        <p>지도 핀은 기능 검증용 합성 데이터입니다. 실제 인허가나 설치 결정을 대신하지 않습니다.</p>
+      </aside>
+    </section>
+
+    <nav class="journey-nav" aria-label="사용자 흐름">
+      <span id="nav-1" class="current"><i>1</i> 민원 접수</span>
+      <span id="nav-2"><i>2</i> AI 분석 · 핀 저장</span>
+      <span id="nav-3"><i>3</i> 주소 기반 연속 대화</span>
+    </nav>
+
+    <section class="workspace">
+      <div class="flow">
+        <section id="step-1" class="step is-active" aria-labelledby="step-title-1">
+          <div class="step-header">
+            <div><span class="step-index">1</span><div class="step-kicker">REPORT A SIGNAL</div><h2 id="step-title-1">민원을 남겨주세요</h2><p class="step-description">영암군의 구체적인 주소와 상황을 입력하면 분석에 필요한 좌표를 함께 확정합니다.</p></div>
+            <span class="lock-label">지금 입력</span>
           </div>
-          <div class="signal-legend"><div><b>01</b><span>입력 검산</span></div><div><b>02</b><span>기록 검색</span></div><div><b>03</b><span>조치 확인</span></div></div>
-        </div>
+          <div class="step-body">
+            <form id="complaint-form">
+              <div class="form-grid">
+                <div class="field full"><label for="complaint-address">민원 위치 주소</label><input id="complaint-address" required value="전라남도 영암군 삼호읍 가상리 45-2" placeholder="전라남도 영암군 삼호읍 도로명 또는 지번 주소"><span class="helper">영암군 주소만 접수합니다. 좌표가 없으면 주소 검색으로 확인합니다.</span></div>
+                <div class="field full"><label for="complaint-text">어떤 일이 있었나요?</label><textarea id="complaint-text" required>집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.</textarea></div>
+              </div>
+              <details open><summary>데모 입력값 · 합성 좌표를 사용해 바로 재현하기</summary><div class="details-grid"><div class="field"><label for="complaint-lat">위도</label><input id="complaint-lat" type="number" step="0.000001" value="34.800000"></div><div class="field"><label for="complaint-lon">경도</label><input id="complaint-lon" type="number" step="0.000001" value="126.420000"></div></div></details>
+              <div class="actions"><button class="button" type="submit">민원 분석하고 좌표 저장</button><button class="button ghost" type="button" id="fill-example">예시 다시 채우기</button></div>
+              <div id="complaint-status" class="status" role="status" aria-live="polite"></div>
+            </form>
+          </div>
+        </section>
+
+        <section id="step-2" class="step is-locked" aria-labelledby="step-title-2">
+          <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">ANALYZE & PIN</div><h2 id="step-title-2">AI 설명과 저장된 핀</h2><p class="step-description">분석 결과, 검색된 영암 근거, 좌표가 한 기록으로 남습니다.</p></div><span id="step-2-label" class="lock-label">1단계 후 열림</span></div>
+          <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 접수하면 이곳에 AI의 첫 설명과 확인할 항목이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI의 첫 설명</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>연결된 근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="next-button" class="button secondary" type="button">다음: 주소로 사전점검 대화 열기 →</button></div></div></div>
+        </section>
+
+        <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
+          <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">KEEP ASKING</div><h2 id="step-title-3">주소를 기준으로 계속 대화</h2><p class="step-description">첫 설명을 읽은 뒤, 같은 민원·근거·좌표를 유지한 채 추가로 물어보세요.</p></div><span id="step-3-label" class="lock-label">2단계 후 열림</span></div>
+          <div class="step-body"><div id="chat-locked" class="answer-box">먼저 1단계 민원을 분석하고 2단계의 다음 버튼을 눌러 주세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">대화할 주소를 한 번 더 확인해 주세요</label><input id="chat-address" value="" placeholder="전라남도 영암군 삼호읍 도로명 또는 지번 주소"><span class="helper">영암군 주소를 입력하면 저장된 민원 근거와 연결해 대화를 시작합니다.</span></div><div class="actions"><button id="address-confirm" class="button secondary" type="button">이 주소로 챗봇 열기 →</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 사전점검 상담</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>RAG / multimodal</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="예: 배수 점검과 주민 설명회에서 다음으로 확인할 자료는 무엇인가요?" required></textarea><div class="chat-tools"><label class="upload">＋ 현장 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하</span><label class="check"><input id="include-map" type="checkbox"> VWorld 지도 영상도 함께 확인</label><button class="button" type="submit">이어서 질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
+        </section>
       </div>
+
+      <aside class="map-sticky">
+        <section class="map-card" aria-labelledby="map-title">
+          <div class="map-heading"><div><div class="eyebrow">YEONGAM ONLY / LIVE PINS</div><h2 id="map-title">영암군 테스트 지도</h2></div><div id="pin-counter" class="map-counter">핀 불러오는 중</div></div>
+          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 합성 데이터 지도"><div class="map-river"></div><div class="map-grid"></div></div>
+          <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 참고 사업</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
+          <div id="pin-detail" class="pin-detail">핀을 선택하면 주소와 데이터 출처를 확인할 수 있습니다.</div>
+        </section>
+        <section class="side-card"><h3>이 화면에서 확인할 것</h3><ul><li>민원 원문이 AI 분석과 함께 저장되는지</li><li>주소에 좌표가 붙어 영암 지도에 핀으로 나오는지</li><li>첫 답변 뒤 이미지·추가 질문이 같은 대화에서 이어지는지</li></ul><p style="margin-top:12px">파란 핀은 합성 참고 사업, 주황 핀은 방금 저장한 사용자 민원입니다.</p></section>
+      </aside>
     </section>
-    <section class="chat-section">
-      <div class="eyebrow">01 · 예정지 입력</div>
-      <h2>설치 예정지 AI 사전점검</h2>
-      <p>부지의 숫자는 규칙으로 계산하고, 지역의 맥락은 회의록 근거로 확인합니다.</p>
-      <form id="chat-form" class="chat-panel">
-        <div class="field"><label for="chat-address">설치 예정지 주소</label><input id="chat-address" name="address" list="region-suggestions" placeholder="예: 전라남도 함평군 손불면" autocomplete="street-address" required></div>
-        <div class="field"><label for="site-area">전체 부지면적 (㎡)</label><input id="site-area" name="site_area_sqm" type="number" min="0" step="0.01" placeholder="예: 6200"></div>
-        <div class="field"><label for="installation-area">설치면적 (㎡)</label><input id="installation-area" name="installation_area_sqm" type="number" min="0" step="0.01" placeholder="예: 4500"></div>
-        <div class="field"><label for="capacity">설비용량 (kW)</label><input id="capacity" name="capacity_kw" type="number" min="0" step="0.01" placeholder="예: 480"></div>
-        <div class="field"><label for="nearest-residence">가장 가까운 주거지까지 (m, 선택)</label><input id="nearest-residence" name="nearest_residence_m" type="number" min="0" step="1" placeholder="예: 150"></div>
-        <div class="field"><label for="nearest-road">가장 가까운 도로까지 (m, 선택)</label><input id="nearest-road" name="nearest_road_m" type="number" min="0" step="1" placeholder="예: 120"></div>
-        <button type="submit">근거 분석하기</button>
-        <div class="field field-wide"><label for="chat-message">추가 설명 (선택)</label><textarea id="chat-message" name="message" placeholder="예: 주택과 가까워 빛반사와 주민 협의 이력이 걱정됩니다."></textarea></div>
-        <div class="small-note">거리·면적·조례 판정은 코드가 계산하고, 문장만 AI가 씁니다. 근거 밖의 숫자나 출처가 섞이면 규칙 기반 답변으로 자동 전환됩니다.</div>
-      </form>
-      <div id="chat-status" class="status">설치 예정지 정보를 입력하면 근거 기반 분석을 시작합니다.</div>
-      <section id="chat-result" class="chat-result" aria-live="polite"></section>
-    </section>
-    <section class="record-search">
-      <div class="eyebrow">02 · 원문 탐색</div>
-      <h2>지역 기록을 직접 확인</h2>
-      <p>챗봇의 답변이 기대는 회의록 근거를 주소나 읍·면·리 단위로 다시 열어볼 수 있습니다.</p>
-      <form id="search-form" class="search-panel">
-        <div class="field"><label for="address">사업지 주소 또는 읍·면·리</label><input id="address" name="address" list="region-suggestions" placeholder="예: 전라남도 영암군 삼호읍" autocomplete="street-address" required><datalist id="region-suggestions"></datalist></div>
-        <button type="submit">지역 기록 조회</button>
-        <div class="small-note">좌표가 없는 기록은 반경으로 계산하지 않고 동일 행정구역 참고 사례로만 분류합니다.</div>
-      </form>
-      <div id="status" class="status">주소를 입력하면 지역 기록을 조회합니다.</div>
-    </section>
-    <section id="summary" class="summary" aria-live="polite">
-      <div class="metric"><strong id="count">0</strong><span>확인된 기록</span></div>
-      <div class="metric"><strong id="case-count">0</strong><span>민원 후보</span></div>
-      <div class="metric"><strong id="admin-count">0</strong><span>행정구역 연결</span></div>
-      <div class="metric"><strong id="near-count">0</strong><span>좌표 반경 연결</span></div>
-      <div class="metric"><strong id="geocode">-</strong><span>주소 해석 상태</span></div>
-    </section>
-    <section id="debug-panel" class="debug-panel" aria-live="polite" hidden>
-      <div class="debug-head"><h2>테스트 실행 로그</h2><span>주소 해석 → 위치 매칭 → 민원 그룹 → 원문 문단</span></div>
-      <pre id="debug-log" class="debug-log"></pre>
-      <details class="raw-json"><summary>전체 API 응답 JSON 보기</summary><pre id="raw-json-content"></pre></details>
-    </section>
-    <section id="results" class="results" aria-live="polite"></section>
-    <section id="case-groups" class="case-groups" aria-live="polite"></section>
-    <footer>루체라는 공개 기록과 입력값을 연결하는 사전점검 도구입니다. 허가·계통 접속 여부와 민원 사실을 자동 확정하지 않습니다.</footer>
+    <div class="footnote">Lucera는 영암군 범위의 합성·공개 기록을 근거로 사전점검 대화를 제공합니다. 합성 데이터는 실제 민원·허가 사실이 아니며, 최종 행정 판단은 담당자 확인이 필요합니다.</div>
   </main>
+
   <script>
-    const form = document.querySelector('#search-form');
-    const statusEl = document.querySelector('#status');
-    const resultsEl = document.querySelector('#results');
-    const summaryEl = document.querySelector('#summary');
-    const caseGroupsEl = document.querySelector('#case-groups');
-    const debugPanelEl = document.querySelector('#debug-panel');
-    const debugLogEl = document.querySelector('#debug-log');
-    const rawJsonEl = document.querySelector('#raw-json-content');
-    const chatForm = document.querySelector('#chat-form');
-    const chatStatusEl = document.querySelector('#chat-status');
-    const chatResultEl = document.querySelector('#chat-result');
-    const esc = (value) => String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
-    const groupLabel = {exact_site:'정확 위치', nearby:'좌표 반경', same_village:'같은 마을', same_ri:'같은 리', same_admin_area:'같은 행정구역', comparative_case:'유사 사례'};
-      const issueLabel = {landscape_damage:'경관', noise_living_discomfort:'소음·생활', agricultural_land_damage:'농지·토지', siting_permit_regulatory:'입지·인허가', communication_procedure:'소통·절차', glare_reflection:'빛반사', external_benefit_distribution:'편익 배분', safety_environment:'환경·안전', grid_connection:'계통·접속'};
-    const formatLocation = (location) => [location.province, location.city_county, location.eup_myeon, location.ri].filter(Boolean).join(' ') || '행정구역 미해석';
-    const processLabel = {complaint_received:'민원 접수·제기', inquiry_or_request:'질의·요청', investigation_or_review:'조사·검토', resident_consultation:'주민 설명·협의', administrative_response:'행정 답변·대응', permit_or_authorization:'인허가·심의', decision_or_disposition:'결정·처분', mitigation_or_action:'보완·조치', follow_up_or_recurrence:'후속·재발'};
-    const conclusionTone = {review_required:'error', conditional_review:'warn', caution:'warn', no_material_risk_found:'ok', insufficient_evidence:'warn'};
-    const valueText = (value) => typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value ?? '-');
-    function renderChatResult(data) {
-      const analysis = data.analysis || {};
-      const input = data.input || {};
-      const location = data.location || {};
-      const rules = (analysis.rule_analysis || {}).checks || [];
-      const reasons = analysis.reason_cards || [];
-      const timeline = analysis.timeline || [];
-      const permits = analysis.permit_analysis || {};
-      const tone = conclusionTone[analysis.conclusion] || 'warn';
-      const ruleMarkup = rules.length ? rules.map(rule => `<li><span class="chat-badge ${esc(rule.status)}">${esc(rule.status === 'pass' ? '통과' : rule.status === 'fail' ? '미충족' : '확인 필요')}</span><strong>${esc(rule.rule_name)}</strong><br><span>${esc(rule.reason)} ${rule.observed_value != null ? `(${esc(valueText(rule.observed_value))}${rule.unit ? ` ${esc(rule.unit)}` : ''}${rule.threshold_value != null ? ` · 기준 ${esc(valueText(rule.threshold_value))}` : ''})` : ''}</span></li>`).join('') : '<li>적용된 규칙이 없습니다.</li>';
-      const reasonMarkup = reasons.length ? reasons.slice(0, 8).map(reason => `<li><strong>${esc(reason.title)}</strong><br>${esc(reason.statement)}<br><span>다음 확인: ${esc(reason.next_check || '-')}</span></li>`).join('') : '<li>검색된 쟁점 근거가 없습니다.</li>';
-      const timelineMarkup = timeline.length ? timeline.slice(0, 12).map(event => `<li><strong>${esc(event.event_date || '날짜 미상')} · ${esc(event.label || processLabel[event.event_type] || event.event_type)}</strong><br>${esc(event.action_text || '')}${event.outcome ? ` <span>(${esc(event.outcome)})</span>` : ''}<br><span>근거 문단: ${esc(event.paragraph_id || '-')} · 확실성: ${esc(event.certainty || '-')}</span></li>`).join('') : '<li>연결된 처리 과정이 없습니다.</li>';
-      const permitMarkup = permits.count ? `<li>검색 범위 내 기존 발전사업 <strong>${esc(permits.count)}건</strong>, 총 <strong>${esc(permits.total_capacity_kw)}kW</strong></li><li>사업개시·운영 ${permits.operation_rate == null ? '확인 불가' : `${esc((permits.operation_rate * 100).toFixed(1))}%`}</li>${(permits.projects || []).slice(0, 5).map(project => `<li>${esc(project.facility_name || '사업')} · ${esc(project.capacity_kw || 0)}kW · ${esc(project.distance_m == null ? '행정구역 기준' : `${project.distance_m}m`)}</li>`).join('')}` : '<li>주변 구조화 사업 데이터가 없습니다.</li>';
-      const limitations = (analysis.limitations || []).map(item => `<li>${esc(item)}</li>`).join('') || '<li>특이사항 없음</li>';
-      const mapContext = data.map_context || {};
-      const mapImages = mapContext.images || [];
-      const mapLayers = (mapContext.layers || []).filter(layer => layer.count);
-      const mapMarkup = mapImages.length
-        ? `<section class="chat-block map-block"><h3>5. 설치 예정지 주변 (VWorld)</h3><div class="map-strip">${mapImages.map(image => `<figure><img src="${esc(image.url)}" alt="${esc(image.label || '')}" loading="lazy"><figcaption>${esc(image.label || image.kind)} · 가로 약 ${esc(image.approx_extent_m)}m</figcaption></figure>`).join('')}</div><ul>${mapLayers.map(layer => `<li><strong>${esc(layer.label)}</strong> ${esc(layer.count)}건${layer.buffer_m ? ` (반경 ${esc(layer.buffer_m)}m)` : ''}</li>`).join('') || '<li>주변 레이어 정보 없음</li>'}<li class="map-note">이미지 판독 결과는 실측이 아닙니다. 거리·개수는 위 룰 검산 값만 사용합니다.</li></ul></section>`
-        : (mapContext.requested === false
-            ? `<section class="chat-block map-block"><h3>5. 설치 예정지 주변</h3><ul><li>지도를 불러오지 않았습니다 (${esc(mapContext.reason || '사유 미상')}).${mapContext.reason === 'address_not_specific_enough' ? ' 리·번지까지 입력하면 항공영상과 주변 정보를 함께 분석합니다.' : ''}</li></ul></section>`
-            : '');
-      const synthetic = String(data.notice || '').includes('합성') || permits.data_origin === 'synthetic';
-      const generation = data.answer_generation || {};
-      const answerBadge = generation.mode === 'claude'
-        ? '<span class="chat-badge">AI 서술 · 근거 검증 통과</span>'
-        : `<span class="chat-badge">규칙 기반 서술${generation.detail ? ` · ${esc(generation.detail)}` : ''}</span>`;
-      chatResultEl.innerHTML = `<div class="chat-result-head"><strong>${esc(analysis.conclusion_label || '분석 결과')}</strong>${answerBadge}${synthetic ? '<span class="chat-badge">합성 데이터 포함</span>' : ''}<div>${esc(formatLocation(location))} · 입력 주소 ${esc(input.address || '-')}</div></div><div class="chat-answer">${esc(data.answer || '')}</div><div class="chat-grid"><section class="chat-block"><h3>1. 룰 기반 입지 검산</h3><ul>${ruleMarkup}</ul></section><section class="chat-block"><h3>2. 과거 쟁점·판단 재료</h3><ul>${reasonMarkup}</ul></section><section class="chat-block"><h3>3. 민원 처리 과정</h3><ul>${timelineMarkup}</ul></section><section class="chat-block"><h3>4. 주변 사업 현황</h3><ul>${permitMarkup}</ul></section>${mapMarkup}<section class="chat-block"><h3>확인 한계</h3><ul>${limitations}</ul></section></div>`;
-      chatResultEl.classList.add('show');
+    const YEONGAM_BOUNDS = { west: 126.34, east: 126.52, south: 34.72, north: 34.90 };
+    let currentConversationId = null;
+    let currentComplaint = null;
+    let pins = [];
+    const $ = (id) => document.getElementById(id);
+    const jsonHeaders = { 'Content-Type': 'application/json' };
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, options);
+      const payload = await response.json().catch(() => ({ error: '응답을 읽지 못했습니다.' }));
+      if (!response.ok) throw new Error(payload.error || `요청 실패 (${response.status})`);
+      return payload;
     }
-    chatForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const numberOrUndefined = (selector) => { const value = document.querySelector(selector).value.trim(); return value === '' ? undefined : Number(value); };
-      const requestPayload = {address: document.querySelector('#chat-address').value.trim(), message: document.querySelector('#chat-message').value.trim(), site_area_sqm: numberOrUndefined('#site-area'), installation_area_sqm: numberOrUndefined('#installation-area'), capacity_kw: numberOrUndefined('#capacity'), nearest_residence_m: numberOrUndefined('#nearest-residence'), nearest_road_m: numberOrUndefined('#nearest-road'), review_mode:'all', include_comparative:true, resolve_address:false};
-      chatStatusEl.className = 'status'; chatStatusEl.textContent = '입력값을 검산하고 회의록 근거를 검색하고 있습니다…'; chatResultEl.classList.remove('show'); chatResultEl.innerHTML = '';
-      try {
-        const response = await fetch('/v1/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(requestPayload)});
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || '분석에 실패했습니다.');
-        chatStatusEl.textContent = `분석 완료 · 근거 ${data.retrieval?.evidence?.length || 0}건 · 처리 과정 ${data.analysis?.timeline?.length || 0}건`;
-        renderChatResult(data);
-      } catch (error) {
-        chatStatusEl.className = 'status error'; chatStatusEl.textContent = error.message; chatResultEl.classList.remove('show');
+
+    function setStatus(id, message, kind = '') { const node = $(id); node.textContent = message || ''; node.className = `status ${kind}`; }
+    function setStep(step) {
+      for (let index = 1; index <= 3; index++) {
+        const stepNode = $(`step-${index}`); const navNode = $(`nav-${index}`);
+        stepNode.classList.toggle('is-active', index <= step); stepNode.classList.toggle('is-locked', index > step); navNode.classList.toggle('current', index === step);
       }
-    });
-    function renderDebugLog(data, requestPayload, elapsedMs) {
-      const query = data.query || {};
-      const location = query.location || {};
-      const summary = data.summary || {};
-      const groups = summary.groups || {};
-      const lines = [
-        `[request] POST /v1/meeting-evidence/search`,
-        `  입력 주소: ${requestPayload.address}`,
-        `  반경: ${requestPayload.radius_m}m · 결과 상한: ${requestPayload.limit}건 · 민원별 원문 상한: ${requestPayload.case_paragraph_limit}건`,
-        `  처리 시간: ${Math.round(elapsedMs)}ms`,
-        ``,
-        `[address] 주소 해석`,
-        `  정규화 주소: ${query.normalized_address || '-'}`,
-        `  행정구역: ${formatLocation(location)}`,
-        `  정밀도: ${location.precision || '-'} · 신뢰도: ${location.confidence ?? '-'} · 방식: ${location.provider || '-'}`,
-        `  좌표: ${location.latitude ?? '없음'}, ${location.longitude ?? '없음'} · 상태: ${summary.geocode_status || location.status || '-'}`,
-        ``,
-        `[search] 조회 요약`,
-        `  기록: ${summary.total || 0}건 · 민원 후보: ${summary.case_count || 0}개 · FTS 사용: ${summary.fts_used ? '예' : '아니오'}`,
-        `  좌표 검색: ${summary.coordinate_search_used ? '사용' : '미사용'} · 전체 매칭 분류: ${JSON.stringify(groups)}`,
-        `  검토 모드: ${summary.review_mode || query.review_mode || 'eligible'} · 검토로 제외된 사건 연결: ${summary.review_filtered_case_links || 0}건`,
-        ``,
-        `[matches] 결과별 위치 연결`,
-      ];
-      (data.results || []).forEach((item, index) => {
-        const match = item.location_match || {};
-        lines.push(`  ${index + 1}. ${item.meeting_date || '날짜 미상'} · ${item.meeting_title || item.title || '문서 미상'}`);
-        lines.push(`     group=${match.group || '-'} · precision=${match.precision || '-'} · distance=${match.distance_m ?? 'unknown'}m · confidence=${match.confidence ?? '-'}`);
-        lines.push(`     basis=${match.basis || '-'} · case=${item.case?.case_id || '미연결'} · paragraph=${item.segment_id || '-'}`);
-      });
-      lines.push('', '[cases] 민원별 원문 문단');
-      (data.case_groups || []).forEach((group, index) => {
-        const caseInfo = group.case || {};
-        lines.push(`  ${index + 1}. ${caseInfo.canonical_title || '민원 후보'} · case_id=${caseInfo.case_id || '-'} · 원문 문단=${group.paragraph_count || 0}건${group.paragraphs_truncated ? ' (일부 반환)' : ''}`);
-        (group.paragraphs || []).forEach((paragraph, paragraphIndex) => {
-          lines.push(`     [${paragraphIndex + 1}] ${paragraph.meeting_date || '날짜 미상'} · ${paragraph.document_title || '문서 미상'} · p.${paragraph.page_from || 1} · paragraph_id=${paragraph.paragraph_id || '-'}`);
-          lines.push(`         evidence_roles=${(paragraph.evidence_roles || []).join(', ') || '-'} · source=${paragraph.source?.url || '없음'}`);
-          lines.push(`         원문: ${paragraph.text_original || '(원문 없음)'}`);
-        });
-      });
-      debugPanelEl.hidden = false;
-      debugLogEl.textContent = lines.join('\n');
-      rawJsonEl.textContent = JSON.stringify(data, null, 2);
     }
-    fetch('/v1/regions').then(response => response.json()).then(data => {
-      const names = [
-        ...(data.parent_regions || []).map(region => region.name),
-        ...(data.regions || []).map(region => `${region.province} ${region.name}`),
-      ];
-      document.querySelector('#region-suggestions').innerHTML = [...new Set(names)].map(name => `<option value="${esc(name)}"></option>`).join('');
-    }).catch(() => {});
-    function render(data) {
-      const groups = data.summary.groups || {};
-      document.querySelector('#count').textContent = data.summary.total;
-      document.querySelector('#case-count').textContent = data.summary.case_count || 0;
-      document.querySelector('#admin-count').textContent = (groups.same_admin_area || 0) + (groups.same_village || 0) + (groups.same_ri || 0);
-      document.querySelector('#near-count').textContent = (groups.exact_site || 0) + (groups.nearby || 0);
-      document.querySelector('#geocode').textContent = data.summary.geocode_status === 'juso' ? '주소 확인' : '행정구역 기준';
-      summaryEl.classList.add('show');
-      if (!data.results.length) { resultsEl.innerHTML = '<div class="empty">연결된 공개 기록이 없습니다. 키워드 수집 범위를 넓히거나 주소를 읍·면 단위로 입력해 보세요.</div>'; caseGroupsEl.innerHTML = ''; return; }
-      resultsEl.innerHTML = data.results.map(item => {
-        const match = item.location_match || {};
-        const issues = (item.issues || []).map(issue => `<span class="issue ${esc(issue.polarity)}">${esc(issueLabel[issue.issue_code] || issue.issue_code)} · ${esc(issue.polarity)}</span>`).join('');
-        const reviewLabel = item.case?.review_decision === 'eligible' ? '검토 통과' : item.case?.review_decision === 'needs_review' ? '검토 필요' : item.case?.review_decision === 'rejected' ? '검색 제외' : (item.case?.review_status === 'pending' ? '검수 대기' : item.case?.review_status);
-        const caseInfo = item.case ? `<div class="case-link"><strong>민원 후보 · ${esc(item.case.canonical_title || '제목 미상')}</strong><span>${esc(item.episode ? `episode ${item.episode.episode_id} · ${item.evidence_role || '근거'}` : '사건 연결 정보')} · ${esc(reviewLabel || '상태 미상')} · score ${esc(item.case.quality_score ?? '-')}</span></div>` : '';
-        const href = item.source && item.source.url;
-        return `<article class="result" data-group="${esc(match.group)}">
-          <div class="result-top"><div><span class="badge">${esc(groupLabel[match.group] || match.group)}</span><h2>${esc(item.meeting_title || item.title)}</h2></div><div class="date">${esc(item.meeting_date || '날짜 미상')}</div></div>
-          <div class="evidence">“${esc(item.evidence_text)}”</div>
-          ${caseInfo}
-          <div class="meta"><span>${esc(item.assembly_name || '기관 미상')}</span><span>페이지 ${esc(item.page_no || 1)}</span><span>${esc(match.basis || '위치 연결 정보 없음')}</span>${match.distance_m != null ? `<span>${esc(match.distance_m)}m</span>` : ''}</div>
-          ${issues ? `<div class="issue-list">${issues}</div>` : ''}
-          ${href ? `<a class="source" href="${esc(href)}" target="_blank" rel="noreferrer">원문 출처 확인 ↗</a>` : '<span class="source">데모·출처 미등록 기록</span>'}
-        </article>`;
-      }).join('');
-      const caseGroups = data.case_groups || [];
-      caseGroupsEl.innerHTML = caseGroups.length ? `<h2>민원별 원문 문단</h2>${caseGroups.map(group => {
-        const caseInfo = group.case || {};
-        const paragraphs = group.paragraphs || [];
-        const paragraphMarkup = paragraphs.map((paragraph, index) => {
-          const source = paragraph.source || {};
-          const href = source.url;
-          const roles = (paragraph.evidence_roles || []).join(', ');
-          return `<details class="case-paragraph" ${index === 0 ? 'open' : ''}>
-            <summary>${esc(paragraph.meeting_date || '날짜 미상')} · ${esc(paragraph.document_title || paragraph.meeting_title || '문서 미상')} · p.${esc(paragraph.page_from || 1)} · 문단 ${esc(paragraph.paragraph_order || '')}</summary>
-            <div class="original-text">${esc(paragraph.text_original || '')}</div>
-            <div class="paragraph-meta"><span>${esc(paragraph.assembly_name || '')}</span><span>${esc(roles || '민원 근거')}</span>${href ? `<a href="${esc(href)}" target="_blank" rel="noreferrer">원문 출처 확인 ↗</a>` : ''}</div>
-          </details>`;
-        }).join('');
-        return `<article class="case-group"><div class="case-group-head"><h3>${esc(caseInfo.canonical_title || '민원 후보')}</h3><span class="case-count">원문 문단 ${esc(group.paragraph_count || 0)}건${group.paragraphs_truncated ? ' · 일부만 표시' : ''}</span></div>${paragraphMarkup || '<div class="empty">연결된 원문 문단이 없습니다.</div>'}</article>`;
-      }).join('')}` : '';
+    function numberOrNull(id) { const value = $(id).value.trim(); return value ? Number(value) : null; }
+    function fillExample() {
+      $('complaint-address').value = '전라남도 영암군 삼호읍 가상리 45-2';
+      $('complaint-text').value = '집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.';
+      $('complaint-lat').value = '34.800000'; $('complaint-lon').value = '126.420000';
+      setStatus('complaint-status', '영암군 삼호읍 합성 예시를 채웠습니다.', 'success');
     }
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const address = document.querySelector('#address').value.trim();
-      const requestPayload = {address, radius_m:5000, limit:20, case_paragraph_limit:100, review_mode:'eligible', include_comparative:false};
-      const startedAt = performance.now();
-      statusEl.className = 'status'; statusEl.textContent = '공개 기록을 검색하고 있습니다…'; resultsEl.innerHTML = ''; caseGroupsEl.innerHTML = '';
-      debugPanelEl.hidden = false; debugLogEl.textContent = `[request] POST /v1/meeting-evidence/search\n  입력 주소: ${address}\n  검색 중…`; rawJsonEl.textContent = '';
+    function percent(value, min, max) { return Math.max(5, Math.min(95, ((value - min) / (max - min)) * 100)); }
+    function renderPins(data) {
+      pins = data.pins || []; const canvas = $('map-canvas'); canvas.querySelectorAll('.map-pin').forEach((node) => node.remove());
+      pins.forEach((pin, index) => {
+        const lat = Number(pin.latitude), lon = Number(pin.longitude); if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+        const button = document.createElement('button'); button.type = 'button'; button.className = `map-pin ${pin.kind}`; button.style.left = `${percent(lon, YEONGAM_BOUNDS.west, YEONGAM_BOUNDS.east)}%`; button.style.top = `${100 - percent(lat, YEONGAM_BOUNDS.south, YEONGAM_BOUNDS.north)}%`; button.title = pin.title || pin.address || '영암 핀'; button.setAttribute('aria-label', button.title); button.innerHTML = '<span></span>'; button.addEventListener('click', () => showPin(pin)); canvas.appendChild(button);
+      });
+      $('pin-counter').textContent = `${pins.length}개 핀`;
+    }
+    function showPin(pin) {
+      const origin = pin.data_origin === 'synthetic' ? '합성 참고 사업' : '사용자 접수 민원';
+      const issues = Array.isArray(pin.issues) ? pin.issues.join(', ') : '';
+      $('pin-detail').innerHTML = `<strong>${escapeHtml(pin.title || '영암 데이터')}</strong><br>${escapeHtml(pin.address || '')}<br><span>${origin}${issues ? ` · ${escapeHtml(issues)}` : ''}</span>`;
+    }
+    function escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
+    async function loadPins() { try { renderPins(await api('/v1/map/pins')); } catch (error) { $('pin-counter').textContent = '지도 연결 실패'; $('pin-detail').textContent = error.message; } }
+    function renderAnalysis(result) {
+      const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
+      currentComplaint = result.complaint; currentConversationId = result.conversation_id;
+      $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
+      $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div>`;
+      $('initial-answer').textContent = analysis.answer || 'AI 설명이 생성되지 않았습니다.';
+      $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span></div>`).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
+      $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
+      setStep(2); $('step-2').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function renderMessages(messages) {
+      const thread = $('chat-thread'); thread.innerHTML = '';
+      (messages || []).forEach((message) => { const bubble = document.createElement('div'); bubble.className = `bubble ${message.role === 'user' ? 'user' : ''}`; const label = message.role === 'user' ? '나' : 'Lucera AI'; bubble.innerHTML = `<small>${label}</small>`; const content = document.createElement('div'); content.textContent = message.content || ''; bubble.appendChild(content); thread.appendChild(bubble); }); thread.scrollTop = thread.scrollHeight;
+    }
+    $('complaint-form').addEventListener('submit', async (event) => {
+      event.preventDefault(); setStatus('complaint-status', '주소 좌표를 확인하고 영암 근거를 연결하는 중입니다…');
+      const lat = numberOrNull('complaint-lat'), lon = numberOrNull('complaint-lon');
       try {
-        const response = await fetch('/v1/meeting-evidence/search', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(requestPayload)});
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || '조회에 실패했습니다.');
-        statusEl.textContent = `${data.summary.total}건의 기록과 ${data.summary.case_count || 0}개 민원 후보를 확인했습니다.`; render(data); renderDebugLog(data, requestPayload, performance.now() - startedAt);
-      } catch (error) {
-        summaryEl.classList.remove('show'); statusEl.className = 'status error'; statusEl.textContent = error.message;
-        debugLogEl.textContent = `[error] ${error.message}\n[request] ${JSON.stringify(requestPayload)}`;
-        rawJsonEl.textContent = '';
-      }
+        const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, latitude: lat, longitude: lon, resolve_address: lat === null || lon === null, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: false }) });
+        renderAnalysis(result); await loadPins(); showPin({ title: result.complaint.title, address: result.complaint.normalized_address, data_origin: 'user_input', issues: result.complaint.issue_codes }); setStatus('complaint-status', '저장 완료. 아래 2단계에서 AI 설명과 연결 근거를 확인하세요.', 'success');
+      } catch (error) { setStatus('complaint-status', error.message, 'error'); }
     });
+    $('fill-example').addEventListener('click', fillExample); $('reload-pins').addEventListener('click', loadPins);
+    $('next-button').addEventListener('click', () => { $('chat-locked').hidden = true; $('chat-address-panel').hidden = false; $('chat-address').value = currentComplaint.normalized_address || $('complaint-address').value; $('step-3').classList.add('is-active'); $('step-3').classList.remove('is-locked'); $('step-3-label').textContent = '주소 확인 대기'; setStep(3); $('step-3').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('chat-address').focus(); });
+    $('address-confirm').addEventListener('click', () => { const address = $('chat-address').value.trim(); if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error'); $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address; renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]); $('chat-message').focus(); setStatus('address-status', '주소가 저장된 민원·근거와 연결되었습니다.', 'success'); });
+    $('chat-image').addEventListener('change', () => { const file = $('chat-image').files[0]; $('image-name').textContent = file ? `${file.name} 선택됨` : '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; });
+    function readImage(file) { return new Promise((resolve, reject) => { if (!file) return resolve(null); if (file.size > 1.5 * 1024 * 1024) return reject(new Error('이미지는 1.5MB 이하만 첨부할 수 있습니다.')); const reader = new FileReader(); reader.onload = () => { const value = String(reader.result || ''); resolve({ media_type: file.type, data: value.split(',')[1] || '' }); }; reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.readAsDataURL(file); }); }
+    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); setStatus('chat-status', '저장된 영암 근거를 다시 조회해 답변하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: $('chat-message').value, image, include_map_context: $('include-map').checked }) }); renderMessages(result.messages); $('chat-message').value = ''; $('chat-image').value = ''; $('image-name').textContent = '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; setStatus('chat-status', '같은 대화에 답변을 저장했습니다.', 'success'); } catch (error) { setStatus('chat-status', error.message, 'error'); } });
+    loadPins();
   </script>
 </body>
 </html>

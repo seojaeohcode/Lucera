@@ -1179,6 +1179,10 @@ class LuceraDB:
             "project_stage_event",
             "project_location_link",
             "project_case_link",
+            "complaint_submission",
+            "chat_conversation",
+            "chat_message",
+            "complaint_evidence",
         ]
         return {table: int(self.conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]) for table in tables}
 

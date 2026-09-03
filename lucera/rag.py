@@ -22,6 +22,7 @@ import config
 from .location import Location, normalize_address
 from .search import SearchService, haversine_m
 from .vworld import VWorldClient
+from .yeongam import require_yeongam, scope_city_county
 
 
 ISSUE_LABELS = {
@@ -150,6 +151,8 @@ def normalize_chat_input(payload: dict[str, Any]) -> dict[str, Any]:
         "review_mode": str(payload.get("review_mode") or "all"),
         "include_comparative": bool(payload.get("include_comparative", True)),
         "include_map_context": bool(payload.get("include_map_context", True)),
+        "scope": str(payload.get("scope") or "yeongam"),
+        "image": payload.get("image"),
         # Rule validity is evaluated against this date so a demo can be pinned
         # to a fixed day and still show which rules are not yet in force.
         "as_of": str(payload.get("as_of") or date.today().isoformat()),
@@ -160,6 +163,7 @@ def normalize_chat_input(payload: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"{key} cannot be negative")
     if normalized["radius_m"] <= 0 or normalized["radius_m"] > 50_000:
         raise ValueError("radius_m must be between 1 and 50000")
+    scope_city_county(normalized["scope"])
     return normalized
 
 
@@ -1171,6 +1175,7 @@ class RAGService:
             "review_mode": data["review_mode"] if data["review_mode"] in {"eligible", "all", "needs_review"} else "all",
             "include_comparative": data["include_comparative"],
             "resolve_address": data["resolve_address"],
+            "scope": data["scope"],
         }
         result = self.search.search(search_payload)
         evidence = [_evidence_from_result(item) for item in result.get("results", [])]
@@ -1190,6 +1195,7 @@ class RAGService:
         # the resolved values in the canonical input shown to the caller.
         data["latitude"] = location.latitude
         data["longitude"] = location.longitude
+        require_yeongam(location.city_county, data["address"])
         # Imagery is fetched before retrieval because a successful VWorld
         # geocode upgrades the location, which changes what retrieval and the
         # distance rules can do.
@@ -1267,6 +1273,7 @@ class RAGService:
                 "permit_project_ids": [item["project_id"] for item in permit_analysis.get("projects", [])],
                 "citation_required": True,
             },
+            "user_image": data.get("image"),
         }
         pack["answer"] = self.answer_generator.generate(pack)
         status = getattr(self.answer_generator, "last_status", None)

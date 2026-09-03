@@ -59,7 +59,7 @@ def synthetic_bundles() -> list[dict[str, Any]]:
         "mime_type": "text/plain",
         "access_policy": "demo",
     }
-    return [
+    bundles = [
         {
             "source": {
                 **base,
@@ -192,6 +192,10 @@ def synthetic_bundles() -> list[dict[str, Any]]:
             ],
         },
     ]
+    # The old fixture file contained useful examples from three counties, but
+    # the product demo is intentionally Yeongam-only. Keep the source snippets
+    # available for archaeology while never loading them into the demo DB.
+    return [bundle for bundle in bundles if bundle["meeting"].get("city_county") == "영암군"]
 
 
 def _region_code(db: LuceraDB, name: str) -> str | None:
@@ -206,6 +210,7 @@ def seed_siting_rules(db: LuceraDB) -> int:
         ("synthetic-yeongam-residence-200", "영암군", "residence", "gte", 200, "m", "주거지 이격거리(합성)", "주거지까지 최소 200m 이상인지 확인하는 시연용 규칙", "[합성] 영암군 도시계획 조례", "제19조의3", "high"),
         ("synthetic-yeongam-road-100", "영암군", "road", "gte", 100, "m", "도로 이격거리(합성)", "도로까지 최소 100m 이상인지 확인하는 시연용 규칙", "[합성] 영암군 도시계획 조례", "제19조의3", "medium"),
     ]
+    rules = [rule for rule in rules if rule[1] == "영암군"]
     inserted = 0
     for rule_id, region_name, reference_object, operator, threshold, unit, name, description, source_title, article, severity in rules:
         region_code = _region_code(db, region_name)
@@ -238,6 +243,7 @@ def seed_permit_projects(db: LuceraDB) -> int:
         ("synthetic-permit-004", "영암 삼호 태양광 B", "합성에너지D", 650, "2021-10-04", "사업개시", "전라남도 영암군 삼호읍 가상리 51-2", "34.8070", "126.4140", {"site_area_sqm": 9800, "installation_area_sqm": 6500, "data_origin": "synthetic"}),
         ("synthetic-permit-005", "무안 해제 태양광 A", "합성에너지E", 200, "2022-02-14", "사업개시", "전라남도 무안군 해제면 가상리 88-1", "35.0600", "126.2900", {"site_area_sqm": 3200, "installation_area_sqm": 2100, "data_origin": "synthetic"}),
     ]
+    projects = [project for project in projects if "영암군" in project[6]]
     for key, facility, company, capacity, permit_date, status, address, lat, lon, metadata in projects:
         project_id = stable_id("synthetic_permit_project", key)
         db.conn.execute(

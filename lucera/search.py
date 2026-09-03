@@ -9,6 +9,7 @@ from typing import Any
 
 from .db import LuceraDB
 from .location import JusoClient, Location, normalize_address
+from .yeongam import scope_city_county
 
 
 # Search defaults are intentionally precision-oriented.  Generic terms such as
@@ -145,6 +146,7 @@ class SearchService:
         if not keywords:
             keywords = list(DEFAULT_KEYWORDS)
         issue_codes = [str(k).strip() for k in payload.get("issue_codes", []) if str(k).strip()]
+        scope_county = scope_city_county(payload["scope"]) if "scope" in payload else None
         location, geocode_status, geocode_response = self.resolve_location(raw_address, payload)
         from_date = payload.get("from_date")
         if from_date:
@@ -175,6 +177,8 @@ class SearchService:
         fts_query = self._build_fts_query(keywords + issue_codes)
         fts_used = bool(fts_query and self._fts_has_hits(fts_query))
         rows = self._load_segments(from_date, fts_query if fts_used else None, keywords)
+        if scope_county:
+            rows = [row for row in rows if row["city_county"] == scope_county]
         links = self._load_links()
         issues_by_segment = self._load_all_issues()
         hierarchy_by_segment = self._load_hierarchy_links()
@@ -325,8 +329,9 @@ class SearchService:
                 "keywords": keywords,
                 "issue_codes": issue_codes,
                 "from_date": from_date,
-                    "case_paragraph_limit": case_paragraph_limit,
+                "case_paragraph_limit": case_paragraph_limit,
                 "review_mode": review_mode,
+                "scope": scope_county,
             },
             "summary": {
                 "total": len(results),
@@ -336,11 +341,12 @@ class SearchService:
                 "coordinate_search_used": bool(location.latitude and location.longitude),
                 "fts_used": fts_used,
                 "review_mode": review_mode,
+                "scope": scope_county,
                 "review_filtered_case_links": sum(max(0, len(hierarchy_by_segment.get(row["segment_id"], [])) - len([link for link in hierarchy_by_segment.get(row["segment_id"], []) if review_mode == "all" or link.get("case", {}).get("review_decision") == ("eligible" if review_mode == "eligible" else "needs_review")])) for row in rows),
             },
             "results": results,
             "case_groups": case_groups_payload,
-            "notice": "이 결과는 공개 기록의 위치·쟁점 연결을 보여주는 참고 자료이며, 허가·계통 접속 여부를 자동 판정하지 않습니다.",
+            "notice": "영암군 범위의 합성·공개 기록을 연결한 참고 자료이며, 허가·계통 접속 여부를 자동 판정하지 않습니다.",
         }
 
     def get_case_paragraphs(self, case_id: str, limit: int | None = None) -> dict[str, Any] | None:

@@ -33,7 +33,6 @@ rm -f /etc/nginx/sites-enabled/default
 chown -R lucera:lucera "$APP_ROOT/data"
 nginx -t
 systemctl daemon-reload
-systemctl enable --now lucera
+systemctl enable lucera
 systemctl enable --now nginx
-curl --fail --silent --show-error http://127.0.0.1/health >/dev/null
-echo "Lucera deployment is healthy"
+echo "Lucera runtime installed; database rebuild and service start are handled by the deploy script."

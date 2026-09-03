@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import config
 
 from .db import LuceraDB
+from .complaints import continue_conversation, create_complaint, get_conversation, yeongam_pins
 from .ingest import ingest_clik
 from .projects import create_project, get_precheck, get_project
 from .regions import parent_region_catalog, region_catalog
@@ -55,7 +56,12 @@ class LuceraHandler(BaseHTTPRequestHandler):
                 self._json({"database": str(self.db.path), **self.db.stats()})
             return
         if path == "/v1/regions":
-            self._json({"scope": "광주광역시·전라남도", "parent_regions": parent_region_catalog(), "regions": region_catalog()})
+            regions = [item for item in region_catalog() if item.get("name") == "영암군"]
+            self._json({"scope": "영암군", "parent_regions": [], "regions": regions})
+            return
+        if path == "/v1/map/pins":
+            with self.db.lock:
+                self._json(yeongam_pins(self.db))
             return
         if path in {"/", "/index.html"}:
             body = (WEB_DIR / "index.html").read_bytes()
@@ -63,6 +69,11 @@ class LuceraHandler(BaseHTTPRequestHandler):
             self.wfile.write(body)
             return
         parts = [part for part in path.split("/") if part]
+        if len(parts) == 3 and parts[:2] == ["v1", "conversations"]:
+            with self.db.lock:
+                conversation = get_conversation(self.db, parts[2])
+            self._json(conversation or {"error": "conversation_not_found"}, 200 if conversation else 404)
+            return
         if len(parts) == 3 and parts[:2] == ["v1", "map-image"]:
             self._map_image(parts[2])
             return
@@ -116,13 +127,25 @@ class LuceraHandler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length > 2_000_000:
+            max_length = 8_000_000 if path.startswith("/v1/conversations/") else 2_000_000
+            if length > max_length:
                 self._json({"error": "request_too_large"}, 413)
                 return
             raw = self.rfile.read(length) if length else b"{}"
             payload = json.loads(raw.decode("utf-8"))
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
+            if path == "/v1/complaints":
+                with self.db.lock:
+                    result = create_complaint(self.db, payload)
+                self._json(result, 201)
+                return
+            match = re.fullmatch(r"/v1/conversations/([^/]+)/messages", path)
+            if match:
+                with self.db.lock:
+                    result = continue_conversation(self.db, match.group(1), payload)
+                self._json(result)
+                return
             if path == "/v1/meeting-evidence/search":
                 with self.db.lock:
                     self._json(SearchService(self.db).search(payload))

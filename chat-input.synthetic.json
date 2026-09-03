@@ -1,0 +1,16 @@
+{
+  "address": "전라남도 영암군 삼호읍 가상리 45-2",
+  "message": "집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.",
+  "latitude": 34.8,
+  "longitude": 126.42,
+  "site_area_sqm": 6200,
+  "installation_area_sqm": 4500,
+  "capacity_kw": 480,
+  "nearest_residence_m": 150,
+  "nearest_road_m": 120,
+  "resolve_address": false,
+  "scope": "yeongam",
+  "review_mode": "all",
+  "include_comparative": false,
+  "include_map_context": false
+}

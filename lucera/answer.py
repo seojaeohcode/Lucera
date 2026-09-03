@@ -73,6 +73,10 @@ SYSTEM_PROMPT = """당신은 태양광 발전시설 설치 예정지 사전점�
 13. 이미지에 보이지 않는 것을 추측해서 쓰지 않습니다. 영상이 흐리거나 판독이
     어려우면 그렇게 적습니다.
 
+사용자가 올린 현장 이미지가 함께 주어지는 경우:
+14. 현장 이미지에서 관찰한 내용도 관찰로만 서술하고, 사진만으로 거리·면적·허가
+    상태를 확정하지 않습니다. 이미지를 읽지 못하면 그 사실을 한계로 적습니다.
+
 출력은 아래 JSON 스키마만 반환합니다. 설명이나 코드블록 표시 없이 JSON만 씁니다.
 
 {
@@ -342,6 +346,22 @@ def _image_blocks(map_context: dict[str, Any]) -> list[dict[str, Any]]:
     return blocks
 
 
+def _user_image_blocks(pack: dict[str, Any]) -> list[dict[str, Any]]:
+    """Convert one browser-uploaded image into an Anthropic image block."""
+
+    image = pack.get("user_image")
+    if not isinstance(image, dict):
+        return []
+    data = str(image.get("data") or "")
+    media_type = str(image.get("media_type") or "").lower()
+    if not data or media_type not in {"image/png", "image/jpeg", "image/webp", "image/gif"}:
+        return []
+    return [
+        {"type": "text", "text": "[사용자 첨부 현장 이미지] 사진은 관찰 보조 자료이며 실측·허가 판정 근거가 아닙니다."},
+        {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}},
+    ]
+
+
 def build_prompt_pack(pack: dict[str, Any]) -> dict[str, Any]:
     """Trim the full pack down to what the prose actually needs."""
 
@@ -598,7 +618,7 @@ class ClaudeAnswerGenerator:
             self.last_status = {"mode": "deterministic", "detail": "claude_key_missing"}
             return self.fallback.generate(pack)
         prompt_pack = build_prompt_pack(pack)
-        image_blocks = _image_blocks(pack.get("map_context") or {})
+        image_blocks = _image_blocks(pack.get("map_context") or {}) + _user_image_blocks(pack)
         image_count = sum(1 for block in image_blocks if block.get("type") == "image")
         try:
             raw = self._call(prompt_pack, image_blocks)
