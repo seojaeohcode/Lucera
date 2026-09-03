@@ -1,0 +1,25 @@
+[Unit]
+Description=Lucera solar dispute history API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lucera
+Group=lucera
+WorkingDirectory=/opt/lucera
+EnvironmentFile=-/etc/lucera/lucera.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/python3 -m lucera.cli --db /opt/lucera/data/db/lucera_minutes.sqlite3 serve --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/lucera/data
+
+[Install]
+WantedBy=multi-user.target

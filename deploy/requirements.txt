@@ -1,0 +1,2 @@
+# Lucera runtime is implemented with Python's standard library.
+# Keep this file for deployment tooling that expects a requirements manifest.

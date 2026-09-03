@@ -1,0 +1,34 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.venv/
+data/*.db
+data/*.sqlite
+data/db/
+data/db/*.sqlite3*
+data/db/backups/
+data/db/snapshots/
+data/dataset/
+data/reference/public_api/
+data/reference/source_materials/
+data/work/
+artifacts/
+config.local.py
+tmp/
+
+# Local packaging/workspace copies.
+*.bundle
+*.zip
+Lucera-repo/
+lucera-app/
+
+# The requested public-data credentials live in the local config.py.
+# Keep them out of commits unless a deployment secret manager replaces them.
+config.py
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.*
+!/.env.example
+__pycache__
+*.pyc
+.pytest_cache
+artifacts
+data/dataset
+data/db/backups
+data/db/snapshots
+data/work
+tmp
+deploy/.dockerignore
