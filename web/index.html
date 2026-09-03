@@ -126,6 +126,19 @@
     .map-pin:hover, .map-pin:focus { outline: 4px solid rgba(229,182,90,.55); }
     .map-key { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 11px; color: #45685f; font-size: 11px; font-weight: 800; }
     .map-key span { display: inline-flex; gap: 6px; align-items: center; }
+    .area-picker { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .area-button { border: 1px solid #a9c6bb; border-radius: 99px; padding: 7px 10px; color: #315f57; background: rgba(255, 252, 246, .72); font-size: 11px; font-weight: 900; }
+    .area-button:hover, .area-button:focus { border-color: var(--ink); outline: none; }
+    .area-button.active { color: #fff; border-color: var(--ink); background: var(--ink); }
+    .area-detail { margin-top: 12px; padding: 13px; border: 1px solid #a9c6bb; border-radius: 14px; color: #315f57; background: rgba(255, 251, 242, .78); }
+    .area-detail-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .area-detail h3 { font-size: 15px; }
+    .area-detail small { color: #6d8075; font-size: 10px; }
+    .area-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 10px; }
+    .area-stat { padding: 8px; border-radius: 10px; background: rgba(229, 242, 234, .72); }
+    .area-stat strong { display: block; font-size: 15px; }
+    .area-stat span { font-size: 10px; }
+    .area-detail-copy { margin-top: 9px; font-size: 11px; line-height: 1.5; }
     .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
     .legend-dot.coral { background: var(--coral); }
     .legend-dot.teal { background: var(--water-deep); }
@@ -194,6 +207,8 @@
           <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
           <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 지도"><div class="map-river"></div><div class="map-grid"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 참고 사업</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
+          <div id="area-picker" class="area-picker" aria-label="영암 읍면 선택"></div>
+          <div id="area-detail" class="area-detail">읍·면 버튼을 누르면 핀과 지역 요약이 바뀝니다.</div>
           <div id="pin-detail" class="pin-detail">핀을 선택하면 주소와 데이터 출처를 확인할 수 있습니다.</div>
         </section>
       </aside>
@@ -206,6 +221,8 @@
     let currentConversationId = null;
     let currentComplaint = null;
     let pins = [];
+    let mapAreas = [];
+    let activeArea = '영암군 전체';
     const $ = (id) => document.getElementById(id);
     const jsonHeaders = { 'Content-Type': 'application/json' };
 
@@ -232,17 +249,41 @@
     }
     function percent(value, min, max) { return Math.max(5, Math.min(95, ((value - min) / (max - min)) * 100)); }
     function renderPins(data) {
-      pins = data.pins || []; const canvas = $('map-canvas'); canvas.querySelectorAll('.map-pin').forEach((node) => node.remove());
-      pins.forEach((pin, index) => {
+      pins = data.pins || []; mapAreas = data.areas || []; renderAreaButtons();
+      const visiblePins = activeArea === '영암군 전체' ? pins : pins.filter((pin) => pin.eup_myeon === activeArea);
+      const canvas = $('map-canvas'); canvas.querySelectorAll('.map-pin').forEach((node) => node.remove());
+      visiblePins.forEach((pin) => {
         const lat = Number(pin.latitude), lon = Number(pin.longitude); if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
         const button = document.createElement('button'); button.type = 'button'; button.className = `map-pin ${pin.kind}`; button.style.left = `${percent(lon, YEONGAM_BOUNDS.west, YEONGAM_BOUNDS.east)}%`; button.style.top = `${100 - percent(lat, YEONGAM_BOUNDS.south, YEONGAM_BOUNDS.north)}%`; button.title = pin.title || pin.address || '영암 핀'; button.setAttribute('aria-label', button.title); button.innerHTML = '<span></span>'; button.addEventListener('click', () => showPin(pin)); canvas.appendChild(button);
       });
-      $('pin-counter').textContent = `${pins.length}개 핀`;
+      $('pin-counter').textContent = activeArea === '영암군 전체' ? `${pins.length}개 핀` : `${visiblePins.length}개 핀 · ${activeArea}`;
+      renderAreaDetail(activeArea);
+    }
+    function renderAreaButtons() {
+      const node = $('area-picker'); node.innerHTML = '';
+      mapAreas.forEach((area) => {
+        const button = document.createElement('button'); button.type = 'button'; button.className = `area-button ${area.area === activeArea ? 'active' : ''}`; button.textContent = area.area === '영암군 전체' ? '전체' : area.area; button.title = `${area.area} ${area.pin_count}개 핀`; button.addEventListener('click', () => selectArea(area.area)); node.appendChild(button);
+      });
+    }
+    function renderAreaDetail(area) {
+      const summary = mapAreas.find((item) => item.area === area); if (!summary) return;
+      const issueText = (summary.issues || []).slice(0, 3).map((code) => issueLabel(code)).join(' · ') || '기록된 쟁점 없음';
+      $('area-detail').innerHTML = `<div class="area-detail-head"><h3>${escapeHtml(summary.area)}</h3><small>${escapeHtml(summary.latest_date || '누적 참고')}</small></div><div class="area-stats"><div class="area-stat"><strong>${summary.pin_count}</strong><span>핀</span></div><div class="area-stat"><strong>${summary.permit_count}</strong><span>참고 사업</span></div><div class="area-stat"><strong>${Number(summary.total_capacity_kw || 0).toLocaleString()}kW</strong><span>합계 용량</span></div></div><div class="area-detail-copy"><strong>주요 기록</strong> ${escapeHtml(issueText)}<br><span>${escapeHtml(summary.notice || '')}</span></div>`;
+    }
+    function issueLabel(code) { return ({ safety_environment: '배수·안전', communication_procedure: '주민협의', grid_connection: '계통', agricultural_land_damage: '농지', landscape_damage: '경관', glare_reflection: '반사광', noise_living_discomfort: '소음', siting_permit_regulatory: '인허가', external_benefit_distribution: '이익공유' }[code] || code); }
+    async function selectArea(area) {
+      activeArea = area; renderAreaButtons(); renderPins({ pins, areas: mapAreas });
+      if (area === '영암군 전체') return;
+      try {
+        const detail = await api(`/v1/map/areas/${encodeURIComponent(area)}`); renderAreaDetail(detail.area); const firstPin = (detail.pins || [])[0]; if (firstPin) showPin(firstPin);
+      } catch (error) { $('area-detail').textContent = error.message; }
     }
     function showPin(pin) {
       const origin = pin.data_origin === 'synthetic' ? '합성 참고 사업' : '사용자 접수 민원';
-      const issues = Array.isArray(pin.issues) ? pin.issues.join(', ') : '';
-      $('pin-detail').innerHTML = `<strong>${escapeHtml(pin.title || '영암 데이터')}</strong><br>${escapeHtml(pin.address || '')}<br><span>${origin}${issues ? ` · ${escapeHtml(issues)}` : ''}</span>`;
+      const issues = Array.isArray(pin.issues) ? pin.issues.map(issueLabel).join(', ') : '';
+      const size = pin.site_area_sqm ? ` · 부지 ${Number(pin.site_area_sqm).toLocaleString()}㎡` : '';
+      const capacity = pin.capacity_kw ? ` · ${Number(pin.capacity_kw).toLocaleString()}kW` : '';
+      $('pin-detail').innerHTML = `<strong>${escapeHtml(pin.title || '영암 데이터')}</strong><br>${escapeHtml(pin.eup_myeon || '')} · ${escapeHtml(pin.address || '')}<br><span>${origin} · ${escapeHtml(pin.status || '상태 미상')}${capacity}${size}${issues ? ` · ${escapeHtml(issues)}` : ''}</span><br><small>${escapeHtml(pin.evidence || pin.metadata?.evidence || '저장된 영암 데이터')}</small>`;
     }
     function escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
     async function loadPins() { try { renderPins(await api('/v1/map/pins')); } catch (error) { $('pin-counter').textContent = '지도 연결 실패'; $('pin-detail').textContent = error.message; } }

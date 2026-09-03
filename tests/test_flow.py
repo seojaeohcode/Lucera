@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from lucera.complaints import continue_conversation, create_complaint, get_conversation, yeongam_pins
+from lucera.complaints import continue_conversation, create_complaint, get_conversation, yeongam_area_detail, yeongam_pins
 from lucera.db import LuceraDB
 from lucera.synthetic import seed_synthetic
 
@@ -21,10 +21,19 @@ class YeongamFlowTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_synthetic_database_is_yeongam_only(self) -> None:
-        self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM source_document").fetchone()[0], 1)
+        self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM source_document").fetchone()[0], 6)
         self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM permit_project WHERE city_county <> '영암군'").fetchone()[0], 0)
         self.assertEqual(self.db.conn.execute("SELECT COUNT(*) FROM siting_rule WHERE rule_id LIKE 'synthetic-%' AND region_code NOT IN (SELECT region_code FROM administrative_region WHERE region_name='영암군')").fetchone()[0], 0)
-        self.assertGreaterEqual(yeongam_pins(self.db)["count"], 2)
+        map_data = yeongam_pins(self.db)
+        self.assertEqual(map_data["count"], 16)
+        self.assertGreaterEqual(len(map_data["areas"]), 8)
+
+    def test_area_detail_returns_only_the_selected_yeongam_area(self) -> None:
+        detail = yeongam_area_detail(self.db, "삼호읍")
+        self.assertIsNotNone(detail)
+        self.assertEqual(detail["summary"]["permit_count"], 3)
+        self.assertTrue(all(pin["eup_myeon"] == "삼호읍" for pin in detail["pins"]))
+        self.assertIsNone(yeongam_area_detail(self.db, "함평군"))
 
     def test_complaint_saves_coordinates_evidence_and_initial_messages(self) -> None:
         result = create_complaint(

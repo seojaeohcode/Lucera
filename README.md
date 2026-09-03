@@ -25,6 +25,7 @@ $py = 'C:\Python313\python.exe'
 브라우저에서 `http://127.0.0.1:8000`을 엽니다. UI의 **예시 다시 채우기**와 **민원 분석하고 좌표 저장**으로 첫 흐름을 재현할 수 있습니다.
 
 샘플 CLI 입력은 [chat-input.synthetic.json](chat-input.synthetic.json)입니다.
+발표 시나리오 3종은 [demo-scenarios.synthetic.json](demo-scenarios.synthetic.json)에서 확인할 수 있습니다.
 
 ```powershell
 & $py -m lucera.cli chat --json-file .\chat-input.synthetic.json
@@ -65,7 +66,7 @@ CLIK_API_KEY=
 
 응답에는 `complaint_id`, `conversation_id`, `complaint`, `analysis`, `evidence_links`가 포함됩니다. 좌표가 없고 주소 검색을 끄면 지도에 저장하지 않고 오류를 반환합니다. 영암군 이외의 주소는 거부합니다.
 
-`GET /v1/map/pins`는 영암군의 합성 참고 사업 및 접수 민원 핀을 반환합니다. `GET /v1/conversations/{conversation_id}`는 대화 전체를 반환합니다.
+`GET /v1/map/pins`는 영암군 전체 핀과 읍·면별 요약을 반환합니다. `GET /v1/map/areas/{eup_myeon}`은 선택한 지역의 핀·용량·쟁점·상태 상세를 반환합니다. `GET /v1/conversations/{conversation_id}`는 대화 전체를 반환합니다.
 
 ### 연속 대화
 
@@ -93,9 +94,9 @@ CLIK_API_KEY=
 
 기존에 섞여 있던 더미·대용량 운영 DB를 배포하지 않습니다. [scripts/rebuild_demo_db.py](scripts/rebuild_demo_db.py)가 새 SQLite 파일을 만들고 다음만 적재합니다.
 
-- 영암군 합성 회의록 1개와 연결된 문단·쟁점·처리 과정
+- 영암군 합성 회의록 6개와 연결된 문단·쟁점·처리 과정
 - 영암군 합성 이격거리 규칙 2개
-- 좌표가 있는 영암군 합성 참고 사업 2개
+- 읍·면 10곳에 분산된 영암군 합성 참고 사업 16개
 - 빈 민원·대화 테이블
 
 `--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다.

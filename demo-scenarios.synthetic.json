@@ -1,0 +1,53 @@
+[
+  {
+    "name": "삼호읍 배수·토사 민원",
+    "address": "전라남도 영암군 삼호읍 가상리 45-2",
+    "message": "집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검에서 무엇을 확인해야 하나요?",
+    "latitude": 34.8,
+    "longitude": 126.42,
+    "site_area_sqm": 6200,
+    "installation_area_sqm": 4500,
+    "capacity_kw": 480,
+    "nearest_residence_m": 150,
+    "nearest_road_m": 120,
+    "resolve_address": false,
+    "scope": "yeongam",
+    "review_mode": "all",
+    "include_comparative": false,
+    "include_map_context": false
+  },
+  {
+    "name": "시종면 누적·계통 확인",
+    "address": "전라남도 영암군 시종면 가상리 122-1",
+    "message": "시종면 주변 허가가 누적된 상황에서 계통연계와 주민 설명회는 어떤 순서로 확인해야 하나요?",
+    "latitude": 34.86,
+    "longitude": 126.454,
+    "site_area_sqm": 7580,
+    "installation_area_sqm": 5760,
+    "capacity_kw": 450,
+    "nearest_residence_m": 360,
+    "nearest_road_m": 340,
+    "resolve_address": false,
+    "scope": "yeongam",
+    "review_mode": "all",
+    "include_comparative": false,
+    "include_map_context": false
+  },
+  {
+    "name": "학산면 반사광 현장 점검",
+    "address": "전라남도 영암군 학산면 가상리 산 429-5",
+    "message": "인근 도로와 주거지에서 반사광이 보일 수 있습니다. 현장 사진과 모듈 방향을 어떻게 점검하나요?",
+    "latitude": 34.776,
+    "longitude": 126.487,
+    "site_area_sqm": 2960,
+    "installation_area_sqm": 2304,
+    "capacity_kw": 180,
+    "nearest_residence_m": 210,
+    "nearest_road_m": 85,
+    "resolve_address": false,
+    "scope": "yeongam",
+    "review_mode": "all",
+    "include_comparative": false,
+    "include_map_context": false
+  }
+]

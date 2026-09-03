@@ -79,7 +79,7 @@ class RagTests(unittest.TestCase):
     def test_synthetic_rag_returns_rules_evidence_process_and_permits(self) -> None:
         seeded = seed_synthetic(self.db)
         self.db.commit()
-        self.assertEqual(seeded["documents"], 1)
+        self.assertEqual(seeded["documents"], 6)
         result = _service(self.db).analyze(
             {
                 "address": "전라남도 영암군 삼호읍 가상리 45-2",
@@ -97,7 +97,7 @@ class RagTests(unittest.TestCase):
         self.assertEqual(result["analysis"]["conclusion"], "review_required")
         self.assertGreaterEqual(len(result["retrieval"]["evidence"]), 1)
         self.assertGreaterEqual(len(result["analysis"]["timeline"]), 1)
-        self.assertEqual(result["analysis"]["permit_analysis"]["count"], 2)
+        self.assertGreaterEqual(result["analysis"]["permit_analysis"]["count"], 3)
         self.assertTrue(all(item["source"]["data_origin"] == "synthetic" for item in result["analysis"]["rule_analysis"]["checks"] if item["rule_id"].startswith("synthetic-")))
         self.assertTrue(result["grounding"]["citation_required"])
         self.assertIn("배수", result["answer"])

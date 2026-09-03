@@ -5,12 +5,12 @@ import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import config
 
 from .db import LuceraDB
-from .complaints import continue_conversation, create_complaint, get_conversation, yeongam_pins
+from .complaints import continue_conversation, create_complaint, get_conversation, yeongam_area_detail, yeongam_pins
 from .ingest import ingest_clik
 from .projects import create_project, get_precheck, get_project
 from .regions import parent_region_catalog, region_catalog
@@ -73,6 +73,12 @@ class LuceraHandler(BaseHTTPRequestHandler):
             with self.db.lock:
                 conversation = get_conversation(self.db, parts[2])
             self._json(conversation or {"error": "conversation_not_found"}, 200 if conversation else 404)
+            return
+        if len(parts) == 4 and parts[:3] == ["v1", "map", "areas"]:
+            area = unquote(parts[3])
+            with self.db.lock:
+                detail = yeongam_area_detail(self.db, area)
+            self._json(detail or {"error": "area_not_found"}, 200 if detail else 404)
             return
         if len(parts) == 3 and parts[:2] == ["v1", "map-image"]:
             self._map_image(parts[2])

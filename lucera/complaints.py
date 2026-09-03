@@ -227,34 +227,114 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
     return {"conversation_id": conversation_id, "analysis": result, "messages": get_conversation(db, conversation_id)["messages"]}
 
 
+YEONGAM_AREA_ORDER = (
+    "영암읍", "삼호읍", "덕진면", "금정면", "신북면", "시종면",
+    "도포면", "군서면", "미암면", "학산면", "서호면",
+)
+
+
+def _safe_json(value: Any, fallback: Any) -> Any:
+    try:
+        return json.loads(value or "")
+    except (TypeError, ValueError):
+        return fallback
+
+
+def _area_summary(pins: list[dict[str, Any]], area: str) -> dict[str, Any]:
+    selected = pins if area == "영암군 전체" else [pin for pin in pins if pin.get("eup_myeon") == area]
+    permits = [pin for pin in selected if pin.get("kind") == "permit"]
+    complaints = [pin for pin in selected if pin.get("kind") == "complaint"]
+    issue_counts: dict[str, int] = {}
+    for pin in selected:
+        for code in pin.get("issues") or []:
+            issue_counts[str(code)] = issue_counts.get(str(code), 0) + 1
+    coordinates = [
+        (float(pin["latitude"]), float(pin["longitude"]))
+        for pin in selected
+        if pin.get("latitude") is not None and pin.get("longitude") is not None
+    ]
+    dates = [str(pin.get("created_at")) for pin in selected if pin.get("created_at")]
+    status_counts: dict[str, int] = {}
+    for pin in selected:
+        status = str(pin.get("status") or "상태 미상")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    return {
+        "area": area,
+        "pin_count": len(selected),
+        "permit_count": len(permits),
+        "complaint_count": len(complaints),
+        "total_capacity_kw": sum(float(pin.get("capacity_kw") or 0) for pin in permits),
+        "issue_counts": dict(sorted(issue_counts.items(), key=lambda pair: (-pair[1], pair[0]))),
+        "issues": list(sorted(issue_counts, key=lambda code: (-issue_counts[code], code))),
+        "status_counts": status_counts,
+        "latest_date": max(dates) if dates else None,
+        "center": {
+            "latitude": round(sum(item[0] for item in coordinates) / len(coordinates), 6) if coordinates else None,
+            "longitude": round(sum(item[1] for item in coordinates) / len(coordinates), 6) if coordinates else None,
+        },
+        "notice": "합성 참고 사업과 사용자가 접수한 영암군 민원을 읍·면 단위로 묶은 화면용 요약입니다.",
+    }
+
+
 def yeongam_pins(db: LuceraDB) -> dict[str, Any]:
     pins: list[dict[str, Any]] = []
     for row in db.conn.execute(
         """SELECT complaint_id AS id, 'complaint' AS kind, title, normalized_address AS address,
                   latitude, longitude, status, issue_codes_json AS issues,
-                  created_at, data_origin FROM complaint_submission
+                  province, city_county, eup_myeon, ri, created_at, data_origin
+           FROM complaint_submission
            WHERE city_county='영암군' AND latitude IS NOT NULL AND longitude IS NOT NULL
            ORDER BY created_at DESC"""
     ).fetchall():
         item = dict(row)
-        try:
-            item["issues"] = json.loads(item["issues"] or "[]")
-        except (TypeError, ValueError):
-            item["issues"] = []
+        item["issues"] = _safe_json(item.get("issues"), [])
+        item["data_origin"] = item.get("data_origin") or "user_input"
         pins.append(item)
     for row in db.conn.execute(
         """SELECT project_id AS id, 'permit' AS kind, facility_name AS title,
                   COALESCE(jibun_address, road_address) AS address, latitude,
-                  longitude, operation_status AS status, metadata_json AS metadata,
-                  permit_date AS created_at, 'synthetic' AS data_origin
+                  longitude, operation_status AS status, company_name AS company,
+                  capacity_kw, province, city_county, eup_myeon, ri,
+                  metadata_json AS metadata, permit_date AS created_at, 'synthetic' AS data_origin
            FROM permit_project
-          WHERE city_county='영암군' AND latitude IS NOT NULL AND longitude IS NOT NULL
-          ORDER BY permit_date DESC"""
+           WHERE city_county='영암군' AND latitude IS NOT NULL AND longitude IS NOT NULL
+           ORDER BY permit_date DESC"""
     ).fetchall():
         item = dict(row)
-        try:
-            item["metadata"] = json.loads(item.pop("metadata") or "{}")
-        except (TypeError, ValueError):
-            item["metadata"] = {}
+        item["metadata"] = _safe_json(item.pop("metadata"), {})
+        metadata = item["metadata"]
+        item["issues"] = metadata.get("issues") or []
+        for key in ("site_area_sqm", "installation_area_min_sqm", "installation_area_max_sqm", "verdict", "evidence", "geo_precision"):
+            if key in metadata:
+                item[key] = metadata[key]
         pins.append(item)
-    return {"scope": "yeongam", "county": YEONGAM_COUNTY, "pins": pins, "count": len(pins)}
+
+    areas = [_area_summary(pins, "영암군 전체")]
+    known_areas = {str(pin.get("eup_myeon")) for pin in pins if pin.get("eup_myeon")}
+    ordered_areas = [area for area in YEONGAM_AREA_ORDER if area in known_areas]
+    ordered_areas.extend(sorted(known_areas - set(ordered_areas)))
+    areas.extend(_area_summary(pins, area) for area in ordered_areas)
+    return {
+        "scope": "yeongam",
+        "county": YEONGAM_COUNTY,
+        "pins": pins,
+        "count": len(pins),
+        "areas": areas,
+        "notice": "영암군만 표시합니다. 지도 핀과 지역 요약은 합성 데이터 또는 사용자가 접수한 데이터입니다.",
+    }
+
+
+def yeongam_area_detail(db: LuceraDB, area: str) -> dict[str, Any] | None:
+    payload = yeongam_pins(db)
+    summary = next((item for item in payload["areas"] if item["area"] == area), None)
+    if not summary:
+        return None
+    pins = payload["pins"] if area == "영암군 전체" else [pin for pin in payload["pins"] if pin.get("eup_myeon") == area]
+    return {
+        "scope": payload["scope"],
+        "county": payload["county"],
+        "area": area,
+        "summary": summary,
+        "pins": pins,
+        "notice": payload["notice"],
+    }
