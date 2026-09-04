@@ -353,11 +353,11 @@
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
       currentComplaint = result.complaint; currentConversationId = result.conversation_id;
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
-      const generation = (result.answer_generation || {}); const generationLabel = generation.mode === 'claude' ? `Claude · ${generation.model || 'API'}` : '로컬 안전 fallback';
+      const generation = (analysis.answer_generation || {}); const generationLabel = generation.mode === 'claude' ? `Claude · ${generation.model || 'API'}` : '로컬 안전 fallback';
       $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div><div class="result-card"><div class="mini-label">ANSWER ENGINE</div><strong>${escapeHtml(generationLabel)}</strong><span class="helper">지도 영상 자동 포함</span></div>`;
       $('initial-answer').textContent = analysis.answer || 'AI 설명이 생성되지 않았습니다.';
       $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span></div>`).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
-      renderMapContext(result.map_context || {});
+      renderMapContext(analysis.map_context || {});
       $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
       setStep(2); $('step-2').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
