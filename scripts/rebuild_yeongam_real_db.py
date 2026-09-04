@@ -40,6 +40,7 @@ def build(path: Path, args: argparse.Namespace) -> dict[str, object]:
         args.minutes,
         geocode_workers=args.geocode_workers,
         map_sample_per_ri=args.map_sample_per_ri,
+        map_sample_target=(None if args.map_sample_per_ri is not None else args.map_sample_target),
     )
 
 
@@ -51,10 +52,16 @@ def main() -> int:
     parser.add_argument("--minutes", type=Path, default=DEFAULT_MINUTES)
     parser.add_argument("--geocode-workers", type=int, default=6)
     parser.add_argument(
+        "--map-sample-target",
+        type=int,
+        default=180,
+        help="지도에 표시할 전체 실제 허가 표본 수(기본 180). 모든 리에 최소 1개를 배정한 뒤 허가 건수에 비례해 추가합니다.",
+    )
+    parser.add_argument(
         "--map-sample-per-ri",
         type=int,
-        default=4,
-        help="리별 지도용 실제 허가 표본 수(기본 4, 데이터가 적은 리는 있는 만큼). 0이면 공식 원장 전체를 지오코딩합니다.",
+        default=None,
+        help="이전 방식의 리별 최대 표본 수. 지정하면 전체 목표 대신 이 값을 사용합니다.",
     )
     parser.add_argument("--replace", action="store_true", help="atomically replace --db and retain a backup")
     args = parser.parse_args()
@@ -63,6 +70,8 @@ def main() -> int:
         raise SystemExit(f"permit CSV not found: {args.csv}")
     if not args.minutes.is_file():
         raise SystemExit(f"minutes corpus not found: {args.minutes}")
+    if args.map_sample_target <= 0 and args.map_sample_per_ri is None:
+        raise SystemExit("--map-sample-target must be greater than zero")
 
     if not args.replace:
         report = build(args.db, args)

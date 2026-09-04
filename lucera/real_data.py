@@ -115,35 +115,20 @@ def load_yeongam_permits(path: str | Path) -> list[dict[str, Any]]:
     return result
 
 
-def select_coordinate_sample(permits: list[dict[str, Any]], per_ri: int = 4) -> list[dict[str, Any]]:
-    """Select a deterministic, compact map sample per ``리`` from the full register.
-
-    All official rows remain in the database. Only the selected rows receive
-    coordinates for the demo map, preventing a 1,549-marker cloud. One row
-    per parcel address is preferred because several records can share a site.
-    The default of four records per ``리`` keeps the map readable while showing
-    the sub-township distribution. For compatibility, the four-record sample
-    is a subset of the former six-record sample, so an existing geocode cache
-    can be reused without new provider calls. Set ``per_ri`` to zero to
-    geocode every row.
-    """
-
-    if per_ri <= 0:
-        return list(permits)
+def _group_coordinate_candidates(permits: list[dict[str, Any]]) -> dict[tuple[str, str], list[dict[str, Any]]]:
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for item in permits:
         group = (str(item.get("eup_myeon") or "기타"), str(item.get("ri") or "리 미상"))
         grouped.setdefault(group, []).append(item)
-    selected: list[dict[str, Any]] = []
-    for group in sorted(grouped):
-        rows = grouped[group]
+    candidates_by_group: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for group, rows in grouped.items():
         by_address: dict[str, dict[str, Any]] = {}
         for item in rows:
             address = str(item.get("jibun_address") or item.get("source_record_key"))
             current = by_address.get(address)
             if current is None or str(item.get("install_year") or "") > str(current.get("install_year") or ""):
                 by_address[address] = item
-        candidates = sorted(
+        candidates_by_group[group] = sorted(
             by_address.values(),
             key=lambda item: (
                 str(item.get("install_year") or ""),
@@ -152,17 +137,84 @@ def select_coordinate_sample(permits: list[dict[str, Any]], per_ri: int = 4) -> 
                 str(item.get("source_record_key") or ""),
             ),
         )
+    return candidates_by_group
+
+
+def _evenly_select(candidates: list[dict[str, Any]], count: int) -> list[dict[str, Any]]:
+    if count <= 0:
+        return []
+    if count >= len(candidates):
+        return list(candidates)
+    stable_target = min(max(count, 6), len(candidates))
+    indices = {
+        round(index * (len(candidates) - 1) / max(1, stable_target - 1))
+        for index in range(stable_target)
+    }
+    return [candidates[index] for index in sorted(indices)][:count]
+
+
+def select_coordinate_sample(
+    permits: list[dict[str, Any]], per_ri: int = 4, target_count: int | None = None
+) -> list[dict[str, Any]]:
+    """Select a deterministic, compact map sample per ``리`` from the full register.
+
+    All official rows remain in the database. Only the selected rows receive
+    coordinates for the demo map, preventing a 1,549-marker cloud. One row
+    per parcel address is preferred because several records can share a site.
+    When ``target_count`` is supplied, every ``리`` receives at least one
+    coordinate and the remaining slots are allocated in proportion to the
+    number of unique permit addresses in that ``리``. This keeps the map
+    readable while preserving the detailed-area distribution. The legacy
+    ``per_ri`` mode remains available for callers that need a fixed per-리 cap.
+    """
+
+    if target_count is not None:
+        if target_count <= 0:
+            return []
+        candidates_by_group = _group_coordinate_candidates(permits)
+        total_candidates = sum(len(rows) for rows in candidates_by_group.values())
+        target = min(target_count, total_candidates)
+        if target <= 0:
+            return []
+        allocations = {group: 1 for group in candidates_by_group if candidates_by_group[group]}
+        if target < len(allocations):
+            allocations = {
+                group: 1
+                for group in sorted(allocations)[:target]
+            }
+        remaining = target - sum(allocations.values())
+        while remaining > 0:
+            eligible = [
+                group for group, rows in candidates_by_group.items()
+                if group in allocations and allocations[group] < len(rows)
+            ]
+            if not eligible:
+                break
+            group = max(
+                eligible,
+                key=lambda item: (
+                    len(candidates_by_group[item]) / (allocations[item] + 1),
+                    len(candidates_by_group[item]) - allocations[item],
+                    tuple(reversed(item)),
+                ),
+            )
+            allocations[group] += 1
+            remaining -= 1
+        return [
+            item
+            for group in sorted(allocations)
+            for item in _evenly_select(candidates_by_group[group], allocations[group])
+        ]
+
+    if per_ri <= 0:
+        return list(permits)
+    candidates_by_group = _group_coordinate_candidates(permits)
+    selected: list[dict[str, Any]] = []
+    for group in sorted(candidates_by_group):
+        candidates = candidates_by_group[group]
         target = min(per_ri, len(candidates))
         if target:
-            # Keep the old six-point selection as the stable superset. This
-            # lets the map density change without invalidating cached coords.
-            stable_target = min(max(target, 6), len(candidates))
-            indices = {
-                round(index * (len(candidates) - 1) / max(1, stable_target - 1))
-                for index in range(stable_target)
-            }
-            stable_sample = [candidates[index] for index in sorted(indices)]
-            selected.extend(stable_sample[:target])
+            selected.extend(_evenly_select(candidates, target))
     return selected
 
 
@@ -555,13 +607,18 @@ def rebuild_real_db(
     *,
     geocode_workers: int = 6,
     map_sample_per_ri: int = 4,
+    map_sample_target: int | None = 180,
 ) -> dict[str, Any]:
     db = LuceraDB(db_path)
     try:
         db.initialize(schema_path)
         rule_count = seed_official_rules(db)
         permits = load_yeongam_permits(permit_csv)
-        map_sample = select_coordinate_sample(permits, per_ri=map_sample_per_ri)
+        map_sample = select_coordinate_sample(
+            permits,
+            per_ri=map_sample_per_ri,
+            target_count=map_sample_target,
+        )
         for item in permits:
             item["map_display"] = False
             item["geocode"] = {"status": "not_sampled"}
@@ -577,6 +634,7 @@ def rebuild_real_db(
             "permit_count": permit_count,
             "map_sample_count": len(map_sample),
             "map_sample_per_ri": map_sample_per_ri,
+            "map_sample_target": map_sample_target,
             "siting_rule_count": rule_count,
             "geocode": geo_report,
             "minutes": minutes_report,

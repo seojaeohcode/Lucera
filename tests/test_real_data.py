@@ -22,6 +22,15 @@ class RealYeongamDataTests(unittest.TestCase):
         self.assertTrue(all(count <= 4 for count in group_counts.values()))
         self.assertGreaterEqual(len(group_counts), 100)
 
+    def test_targeted_map_sample_is_about_180_and_covers_each_ri(self) -> None:
+        path = Path(__file__).parents[1] / "data/reference/yeongam_solar_permits_20260301.csv"
+        permits = load_yeongam_permits(path)
+        sample = select_coordinate_sample(permits, target_count=180)
+        groups = {(item["eup_myeon"], item["ri"]) for item in sample}
+        self.assertEqual(len(sample), 180)
+        self.assertGreaterEqual(len(groups), 100)
+        self.assertEqual(len(sample), len({item["source_record_key"] for item in sample}))
+
 
 if __name__ == "__main__":
     unittest.main()

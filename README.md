@@ -19,7 +19,7 @@ Windows PowerShell에서 프로젝트 루트에서 실행합니다.
 
 ```powershell
 $py = 'C:\Python313\python.exe'
-& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 4 --geocode-workers 12
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-target 180 --geocode-workers 12
 & $py -m lucera.cli serve --host 127.0.0.1 --port 8000
 ```
 
@@ -95,17 +95,17 @@ CLIK_API_KEY=
 실제 화면용 DB는 [scripts/rebuild_yeongam_real_db.py](scripts/rebuild_yeongam_real_db.py)가 새 SQLite 파일에 다음을 적재합니다.
 
 - 공공데이터포털 영암군 태양광 허가정보 원장 1,549건
-- 원장 지번 주소에서 보정한 지도용 실제 좌표 표본(리별 최대 4건, 데이터가 적은 리는 있는 만큼)
+- 원장 지번 주소에서 보정한 지도용 실제 좌표 표본(리별 최소 1건, 허가 건수 비례로 총 180건)
 - 영암군 실제 회의록 12건·136개 문단·쟁점·처리 과정
 - 허가 사례와 회의록 문단의 읍·면·리·태양광 맥락 연결
 
 지도 표본은 합성 데이터가 아니다. 원장 전체를 DB에 보존하고, 실제 주소를 지오코딩한 리별 대표 사례만 지도에 표시한다. 좌표에는 지오코더, 매칭 점수, 원 주소, 처리 상태를 함께 저장한다.
 
 ```powershell
-& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 4 --geocode-workers 12
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-target 180 --geocode-workers 12
 ```
 
-`--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다. `--map-sample-per-ri 0`을 지정할 때만 공식 원장 전체를 지오코딩합니다.
+`--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다. 기본값은 리별 최소 1건과 허가 건수 비례 배분으로 지도 표본 180건을 지오코딩하며, 이전 방식이 필요하면 `--map-sample-per-ri`를 지정합니다.
 
 ## 구조
 
@@ -141,4 +141,4 @@ Terraform 인프라는 `infra/ncloud/`에 있고, 배포 스크립트는 Terrafo
 & .\scripts\deploy_ncloud.ps1
 ```
 
-배포는 코드·스키마·실제 원장·재생성 스크립트를 업로드하고, 서버에서 서비스를 멈춘 뒤 `rebuild_yeongam_real_db.py --map-sample-per-ri 4`으로 실제 영암 DB를 재생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
+배포는 코드·스키마·실제 원장·재생성 스크립트를 업로드하고, 서버에서 서비스를 멈춘 뒤 `rebuild_yeongam_real_db.py --map-sample-target 180`으로 실제 영암 DB를 재생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
