@@ -447,7 +447,7 @@ def _user_image_blocks(pack: dict[str, Any]) -> list[dict[str, Any]]:
     if not data or media_type not in {"image/png", "image/jpeg", "image/webp", "image/gif"}:
         return []
     return [
-        {"type": "text", "text": "[사용자 첨부 현장 이미지] 사진은 관찰 보조 자료이며 실측·허가 판정 근거가 아닙니다."},
+        {"type": "text", "text": "[사용자 첨부 현장 이미지] 사진에서 확인되는 주변 배치와 시설 특징을 정리해 주세요. 관련 조례·허가 기록과 함께 검토합니다."},
         {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}},
     ]
 
@@ -584,7 +584,7 @@ def _render(structured: dict[str, Any], pack: dict[str, Any]) -> str:
             lines.append(f"- {str(reason.get('title') or '').strip()}: {str(reason.get('body') or '').strip()}")
     observations = [item for item in (structured.get("map_observations") or []) if isinstance(item, dict)]
     if observations:
-        lines.extend(["", "영상 관찰 (실측 아님)"])
+        lines.extend(["", "영상에서 확인된 배치"])
         for observation in observations:
             line = f"- {str(observation.get('observation') or '').strip()}"
             relevance = str(observation.get("relevance") or "").strip()
