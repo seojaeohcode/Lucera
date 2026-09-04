@@ -90,9 +90,9 @@ class SearchService:
             location.status = "resolved_by_user"
             return location, "user_input", None
         # An 읍/면/리-only input must not be geocoded to an arbitrary first building.
-        should_geocode = payload.get("resolve_address", True) and bool(
-            re.search(r"\d", raw_address) and re.search(r"(?:로|길|번지|번)", raw_address)
-        )
+        has_parcel_number = bool(re.search(r"\d+(?:-\d+)?\s*(?:번지|번)?\s*$", raw_address))
+        has_road_number = bool(re.search(r"(?:로|길)\s*\d+", raw_address))
+        should_geocode = payload.get("resolve_address", True) and (has_parcel_number or has_road_number)
         if not should_geocode:
             return normalize_address(raw_address), "parsed_admin_area", None
         location, response = self.geocoder.resolve(raw_address)

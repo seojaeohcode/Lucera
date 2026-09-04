@@ -1247,6 +1247,13 @@ class RAGService:
             if data["include_map_context"]
             else {"requested": False, "reason": "disabled_by_request", "images": [], "layers": [], "errors": []}
         )
+        # If the address provider was unavailable or only parsed an area, the
+        # VWorld context may still have resolved this exact parcel. Reflect
+        # that successful coordinate source in the public analysis status.
+        map_geocode = map_context.get("geocode") or {}
+        if location.latitude is not None and location.longitude is not None and map_geocode.get("status") == "OK":
+            geocode_status = "vworld"
+            geocode_response = map_geocode
         search_result, evidence = self._retrieve(data, location)
         results = search_result.get("results", [])
         case_ids = {
