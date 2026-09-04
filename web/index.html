@@ -352,8 +352,9 @@
     @media (max-width: 700px) { .analysis-reasons { grid-template-columns: 1fr; } }
     @media (min-width: 761px) {
       .shell { width: min(1480px, calc(100% - 36px)); }
-      .workspace.page-map { grid-template-columns: minmax(0, 1.14fr) minmax(480px, .86fr); }
+      .workspace.page-map { grid-template-columns: minmax(0, 1fr); }
       .workspace.page-map .flow, .workspace.page-map .step, .workspace.page-map .map-sticky { min-width: 0; width: 100%; }
+      .workspace.page-map .map-sticky { position: static; }
     }
     @media (max-width: 760px) { .topbar-nav { display: none; } .topbar-actions .scope-badge { display: none; } .hero { min-height: 500px; padding-top: 56px; } .hero-art::before { width: 92vw; height: 68vw; } .hero-document-art { left: 2%; bottom: 10%; transform: scale(.76) rotate(7deg); } .hero-sun { right: 3%; top: 13%; transform: scale(.72); } .hero-pin-art { right: 3%; bottom: 17%; transform: scale(.8) rotate(-45deg); } }
     @media (max-width: 560px) { .topbar { padding-top: 15px; } .hero { min-height: 470px; padding-bottom: 64px; } h1 { font-size: 45px; } .hero-copy { font-size: 14px; } .journey-nav { justify-content: flex-start; border-radius: 18px; } }
