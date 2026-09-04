@@ -351,6 +351,18 @@
     .answer-slide-image { display: block; width: 100%; height: auto; border-radius: 11px; background: #f2faf4; }
     .answer-slide-caption { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px 2px; color: var(--ink-soft); font-size: 10px; font-weight: 900; }
     .answer-slide-caption em { color: var(--brand); font-style: normal; }
+    .chat-media { width: min(92%, 470px); margin: 2px 0 5px 43px; padding: 12px; border: 1px solid #d7e8dc; border-radius: 17px; background: #f8fcf8; }
+    .chat-media-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 9px; }
+    .chat-media-head strong { color: var(--ink); font-size: 12px; }
+    .chat-media-head span { color: var(--ink-soft); font-size: 10px; }
+    .chat-media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+    .chat-media-thumb { position: relative; min-width: 0; padding: 0; border: 1px solid #c9e4d5; border-radius: 11px; overflow: hidden; cursor: zoom-in; background: #eaf5ed; }
+    .chat-media-thumb:hover, .chat-media-thumb:focus { border-color: var(--sun-deep); outline: 3px solid rgba(230,161,0,.18); }
+    .chat-media-thumb img { display: block; width: 100%; aspect-ratio: 1.28; object-fit: cover; }
+    .chat-media-thumb span { display: block; padding: 5px 4px 6px; color: var(--ink-soft); background: #fff; font-size: 9px; line-height: 1.25; }
+    .image-modal-card { width: min(920px, 100%); padding: 14px; }
+    .image-modal-card img { max-height: calc(100vh - 120px); object-fit: contain; background: #eef7f0; }
+    .image-modal-caption { margin: 9px 4px 2px; color: var(--ink-soft); font-size: 11px; }
     .chat-form { padding: 11px 12px 13px; background: #fff; }
     .chat-form textarea { min-height: 52px; max-height: 120px; padding: 12px 13px; border-color: #d7e8dc; border-radius: 16px; resize: vertical; }
     .chat-tools { gap: 7px; }
@@ -359,7 +371,7 @@
     .slide-modal-card { position: relative; width: min(680px, 100%); max-height: calc(100vh - 44px); padding: 13px; overflow: auto; border-radius: 22px; background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.25); }
     .slide-modal-card img { display: block; width: 100%; height: auto; border-radius: 13px; }
     .slide-modal-close { position: absolute; top: 21px; right: 21px; z-index: 1; width: 34px; height: 34px; border: 0; border-radius: 50%; color: #fff; background: rgba(18,59,42,.82); font-size: 20px; line-height: 1; }
-    @media (max-width: 560px) { .chat-notice { font-size: 10px; } .chat-thread { min-height: 320px; } .answer-slide { width: 92%; margin-left: 43px; } .chat-tools .helper { display: none; } .chat-tools .button { padding: 10px 13px; } }
+    @media (max-width: 560px) { .chat-notice { font-size: 10px; } .chat-thread { min-height: 320px; } .answer-slide, .chat-media { width: 92%; margin-left: 43px; } .chat-media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .chat-tools .helper { display: none; } .chat-tools .button { padding: 10px 13px; } }
   </style>
 </head>
 <body>
@@ -437,6 +449,9 @@
   <div id="slide-modal" class="slide-modal" hidden role="dialog" aria-modal="true" aria-labelledby="slide-modal-title">
     <div class="slide-modal-card"><button id="slide-modal-close" class="slide-modal-close" type="button" aria-label="슬라이드 닫기">×</button><h2 id="slide-modal-title" class="sr-only">AI 답변 요약</h2><img id="slide-modal-image" alt="AI 답변 요약 이미지"></div>
   </div>
+  <div id="image-modal" class="slide-modal" hidden role="dialog" aria-modal="true" aria-labelledby="image-modal-title">
+    <div class="slide-modal-card image-modal-card"><button id="image-modal-close" class="slide-modal-close" type="button" aria-label="지도 영상 닫기">×</button><h2 id="image-modal-title" class="sr-only">참고 지도 영상</h2><img id="image-modal-image" alt="분석에 사용된 참고 지도 영상"><p id="image-modal-caption" class="image-modal-caption"></p></div>
+  </div>
 
   <script>
     let mapBounds = { west: 126.32, east: 126.86, south: 34.61, north: 34.96 };
@@ -452,6 +467,8 @@
     let activeFeature = 'f1';
     let chatStepReady = false;
     let chatMessages = [];
+    let currentMapContext = {};
+    let currentInitialSlide = null;
     const $ = (id) => document.getElementById(id);
     const jsonHeaders = { 'Content-Type': 'application/json' };
 
@@ -663,9 +680,13 @@
     }
     function escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
     async function loadPins() { try { activeArea = '영암군 전체'; activeRiKey = ''; renderPins(await api('/v1/map/pins')); } catch (error) { $('pin-counter').textContent = '지도 연결 실패'; $('pin-detail').textContent = error.message; } }
+    function mapMediaPayload(context) {
+      const source = context?.map_media || context || {}; const images = Array.isArray(source.images) ? source.images : [];
+      return { provider: source.provider || 'VWorld', images: images.map((image) => ({ ...image, url: image.url || (image.cache_key ? `/v1/map-image/${image.cache_key}` : '') })).filter((image) => image.url).slice(0, 3) };
+    }
     function renderAnalysis(result) {
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
-      currentComplaint = result.complaint; currentConversationId = result.conversation_id;
+      currentComplaint = result.complaint; currentConversationId = result.conversation_id; currentMapContext = analysis.map_context || {}; currentInitialSlide = result.answer_slide || null;
       hideAnalysisLoading();
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
       $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div>`;
@@ -701,9 +722,28 @@
       const image = document.createElement('img'); image.className = 'answer-slide-image'; image.src = slideDataUrl(slide); image.alt = `${slide.title || 'AI 답변'} 요약 이미지`; button.appendChild(image);
       const caption = document.createElement('span'); caption.className = 'answer-slide-caption'; caption.innerHTML = '<span>답변 요약 슬라이드</span><em>눌러서 크게 보기</em>'; button.appendChild(caption); button.addEventListener('click', () => openSlide(slide)); return button;
     }
+    function openMapImage(image) {
+      if (!image?.url) return;
+      $('image-modal-image').src = image.url;
+      $('image-modal-image').alt = image.label || '분석에 사용된 참고 지도 영상';
+      $('image-modal-caption').textContent = `${image.label || '주변 지도 영상'} · ${image.approx_extent_m ? `가로 약 ${Number(image.approx_extent_m).toLocaleString()}m` : '분석 위치 주변'}`;
+      $('image-modal').hidden = false;
+      $('image-modal-close').focus();
+    }
+    function renderChatMedia(context) {
+      const media = mapMediaPayload(context); if (!media.images.length) return null;
+      const card = document.createElement('section'); card.className = 'chat-media'; card.setAttribute('aria-label', '분석에 사용된 참고 지도 영상');
+      const head = document.createElement('div'); head.className = 'chat-media-head'; head.innerHTML = '<strong>참고한 위성·항공영상</strong><span>VWorld · 눌러서 크게 보기</span>'; card.appendChild(head);
+      const grid = document.createElement('div'); grid.className = 'chat-media-grid';
+      media.images.forEach((item) => { const button = document.createElement('button'); button.type = 'button'; button.className = 'chat-media-thumb'; button.setAttribute('aria-label', `${item.label || '지도 영상'} 크게 보기`); const image = document.createElement('img'); image.src = item.url; image.alt = item.label || '분석에 사용된 참고 지도 영상'; button.appendChild(image); const label = document.createElement('span'); label.textContent = item.label || '주변 지도 영상'; button.appendChild(label); button.addEventListener('click', () => openMapImage(item)); grid.appendChild(button); });
+      card.appendChild(grid); return card;
+    }
     function renderMessages(messages) {
       chatMessages = Array.isArray(messages) ? messages : []; const thread = $('chat-thread'); thread.innerHTML = '';
-      chatMessages.forEach((message) => { const row = document.createElement('div'); row.className = `chat-message ${message.role === 'user' ? 'user' : 'assistant'}`; if (message.role !== 'user') { const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); } const bubble = document.createElement('div'); bubble.className = `bubble ${message.role === 'user' ? 'user' : ''}`; const label = message.role === 'user' ? '나' : 'Lucera AI'; const labelNode = document.createElement('small'); labelNode.textContent = label; bubble.appendChild(labelNode); const content = document.createElement('div'); content.textContent = message.content || ''; bubble.appendChild(content); if (message.metadata?.image_received) { const imageNote = document.createElement('small'); imageNote.className = 'image-received'; imageNote.textContent = '현장 이미지 첨부'; bubble.appendChild(imageNote); } row.appendChild(bubble); thread.appendChild(row); const slide = renderSlide(message); if (slide) thread.appendChild(slide); });
+      const firstAssistantIndex = chatMessages.findIndex((message) => message.role !== 'user');
+      chatMessages.forEach((message, index) => { const row = document.createElement('div'); row.className = `chat-message ${message.role === 'user' ? 'user' : 'assistant'}`; if (message.role !== 'user') { const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); } const bubble = document.createElement('div'); bubble.className = `bubble ${message.role === 'user' ? 'user' : ''}`; const label = message.role === 'user' ? '나' : 'Lucera AI'; const labelNode = document.createElement('small'); labelNode.textContent = label; bubble.appendChild(labelNode); const content = document.createElement('div'); content.textContent = message.content || ''; bubble.appendChild(content); if (message.metadata?.image_received) { const imageNote = document.createElement('small'); imageNote.className = 'image-received'; imageNote.textContent = '현장 이미지 첨부'; bubble.appendChild(imageNote); } row.appendChild(bubble); thread.appendChild(row);
+        if (message.role !== 'user' && index === firstAssistantIndex) { const slide = renderSlide(message) || (currentInitialSlide ? renderSlide({ metadata: { slide: currentInitialSlide } }) : null); if (slide) thread.appendChild(slide); const storedMedia = message.metadata?.map_media; const media = renderChatMedia(storedMedia?.images?.length ? storedMedia : currentMapContext); if (media) thread.appendChild(media); } else { const slide = renderSlide(message); if (slide) thread.appendChild(slide); }
+      });
       $('chat-count').textContent = `대화 ${chatMessages.filter((message) => message.role === 'user').length}회`; thread.scrollTop = thread.scrollHeight;
     }
     function appendTyping() {
@@ -770,12 +810,12 @@
       try {
         const image = await readImage($('chat-image').files[0]);
         const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: messageText, image, include_map_context: true }) });
-        renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success');
+        currentMapContext = result.analysis?.map_context || currentMapContext; renderMessages(result.messages); renderMapContext(currentMapContext); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success');
       } catch (error) { document.getElementById('chat-typing')?.remove(); setStatus('chat-status', error.message, 'error'); }
       finally { setBusyButton(submit, false, '질문하기'); }
     });
     $('chat-message').addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') $('chat-form').requestSubmit(); });
-    $('slide-modal-close').addEventListener('click', () => { $('slide-modal').hidden = true; }); $('slide-modal').addEventListener('click', (event) => { if (event.target === $('slide-modal')) $('slide-modal').hidden = true; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') $('slide-modal').hidden = true; });
+    $('slide-modal-close').addEventListener('click', () => { $('slide-modal').hidden = true; }); $('slide-modal').addEventListener('click', (event) => { if (event.target === $('slide-modal')) $('slide-modal').hidden = true; }); $('image-modal-close').addEventListener('click', () => { $('image-modal').hidden = true; }); $('image-modal').addEventListener('click', (event) => { if (event.target === $('image-modal')) $('image-modal').hidden = true; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') { $('slide-modal').hidden = true; $('image-modal').hidden = true; } });
     setStep(1); loadRuntimeStatus(); loadPins(); loadFeature(activeFeature); loadCaseCatalog();
   </script>
 </body>

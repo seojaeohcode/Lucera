@@ -109,6 +109,40 @@ def _answer_slide_payload(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _map_media_payload(result: dict[str, Any]) -> dict[str, Any]:
+    """Persist only the map media needed to show the evidence in chat.
+
+    The full VWorld context contains local cache paths and feature payloads. A
+    conversation only needs stable, same-origin image URLs plus enough context
+    for a person to understand what each image represents.
+    """
+
+    context = result.get("map_context") or {}
+    images: list[dict[str, Any]] = []
+    for image in (context.get("images") or [])[:3]:
+        url = str(image.get("url") or "").strip()
+        cache_key = str(image.get("cache_key") or "").strip()
+        if not url and cache_key:
+            url = f"/v1/map-image/{cache_key}"
+        if not url:
+            continue
+        images.append(
+            {
+                "url": url,
+                "kind": str(image.get("kind") or "aerial").strip(),
+                "label": str(image.get("label") or "주변 지도 영상").strip(),
+                "approx_extent_m": image.get("approx_extent_m"),
+                "media_type": str(image.get("media_type") or "image/png").strip(),
+            }
+        )
+    return {
+        "available": bool(images),
+        "provider": str(context.get("provider") or "VWorld").strip(),
+        "images": images,
+        "note": "영상은 주변 배치 관찰용이며 거리·면적을 확정하는 근거가 아닙니다.",
+    }
+
+
 def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
     text = " ".join(str(payload.get("text") or payload.get("message") or "").split())
     address = " ".join(str(payload.get("address") or "").split())
@@ -182,7 +216,14 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
         "case_type": (result.get("analysis") or {}).get("case_type"),
     })
     slide = _answer_slide_payload(result)
-    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "initial_analysis", "slide": slide})
+    map_media = _map_media_payload(result)
+    _insert_message(
+        db,
+        conversation_id,
+        "assistant",
+        result.get("answer") or "",
+        {"kind": "initial_analysis", "slide": slide, "map_media": map_media},
+    )
     links = _link_evidence(db, complaint_id, result)
     db.conn.execute("UPDATE chat_conversation SET updated_at=? WHERE conversation_id=?", (_now(), conversation_id))
     db.commit()
@@ -265,7 +306,14 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
         raise ValueError("새 주소의 좌표를 확인하지 못했습니다. 더 구체적인 영암군 주소를 입력해 주세요.")
     _insert_message(db, conversation_id, "user", message, {"kind": "follow_up", "image_received": bool(image)})
     slide = _answer_slide_payload(result)
-    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "follow_up_analysis", "slide": slide})
+    map_media = _map_media_payload(result)
+    _insert_message(
+        db,
+        conversation_id,
+        "assistant",
+        result.get("answer") or "",
+        {"kind": "follow_up_analysis", "slide": slide, "map_media": map_media},
+    )
     db.conn.execute("UPDATE chat_conversation SET updated_at=? WHERE conversation_id=?", (_now(), conversation_id))
     if address_changed:
         db.conn.execute(
