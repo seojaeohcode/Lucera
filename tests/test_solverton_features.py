@@ -37,8 +37,10 @@ class SolvertonFeatureTests(unittest.TestCase):
     def test_f4_contains_only_yeongam_eup_myeon_rows(self) -> None:
         result = yeongam_f4(self.db)
         self.assertTrue(result["items"])
+        self.assertEqual(len(result["items"]), 11)
         self.assertTrue(all(row["eup_myeon"] for row in result["items"]))
         self.assertFalse(any("함평" in row["eup_myeon"] for row in result["items"]))
+        self.assertTrue(all(row["supply_data_present"] for row in result["items"]))
 
 
 if __name__ == "__main__":

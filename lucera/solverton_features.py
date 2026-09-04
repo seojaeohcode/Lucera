@@ -23,6 +23,10 @@ ORDINANCE_PATH = REFERENCE_DIR / "jeonnam_ordinance_rules.json"
 ENCIRCLEMENT_PATH = REFERENCE_DIR / "jeonnam_ri_solar_accumulation.csv"
 GRID_PATH = REFERENCE_DIR / "jeonnam_kepco_supply.csv"
 LAW_SOURCE_URL = "https://www.law.go.kr/DRF/lawSearch.do?target=ordin"
+YEONGAM_EUP_MYEON = (
+    "영암읍", "삼호읍", "덕진면", "금정면", "신북면", "시종면",
+    "도포면", "군서면", "미암면", "학산면", "서호면",
+)
 
 
 def _number(value: Any) -> float | None:
@@ -74,7 +78,7 @@ def yeongam_f1() -> dict[str, Any]:
     row = dict(_ordinance_rows()[0]) if _ordinance_rows() else {}
     return {
         "feature": "F1",
-        "name": "영암군 조례 기준 레이어",
+        "name": "영암군 태양광 설치 기준",
         "scope": YEONGAM_COUNTY,
         "status": "ready" if row else "source_missing",
         "verification": "solverton_reference_snapshot",
@@ -98,7 +102,7 @@ def yeongam_f1() -> dict[str, Any]:
             "cultural_asset_m": _number(row.get("문화재_m")),
             "note": row.get("비고"),
         },
-        "notice": "영암군 조례 원문 스냅샷 기준입니다. 최종 허가 판단 전 현행 조문을 다시 확인해야 합니다.",
+        "notice": "주거지·도로와의 거리 등 영암군 태양광 설치 기준을 보여줍니다. 최종 허가 판단 전 현행 조문을 다시 확인해야 합니다.",
     }
 
 
@@ -144,7 +148,7 @@ def yeongam_f3(db: Any) -> dict[str, Any]:
         row["rank"] = rank
     return {
         "feature": "F3",
-        "name": "영암군 리별 누적 포위도",
+        "name": "리별 태양광 허가 누적",
         "scope": YEONGAM_COUNTY,
         "status": "ready" if rows else "source_missing",
         "radius_m": 1000,
@@ -152,7 +156,7 @@ def yeongam_f3(db: Any) -> dict[str, Any]:
         "data_origin": "solverton_reference_snapshot",
         "snapshot_date": "2026-09-03",
         "items": rows,
-        "notice": "리별 누적 허가 건수와 면적을 보여줍니다. 좌표가 있는 대표 표본만 지도에 표시하며, 면적 비율은 근거가 없어 산출하지 않습니다.",
+        "notice": "리 단위로 누적 허가 건수와 면적을 비교합니다. 좌표가 있는 대표 표본만 지도에 표시합니다.",
     }
 
 
@@ -170,29 +174,36 @@ def yeongam_f4(db: Any) -> dict[str, Any]:
         ).fetchall()
         if row["eup_myeon"]
     }
-    items = []
-    for row in sorted(_grid_rows(), key=lambda item: str(item.get("읍면동") or "")):
+    grouped_supply: dict[str, list[str]] = {}
+    for row in _grid_rows():
         area = str(row.get("읍면동") or "")
+        if area not in YEONGAM_EUP_MYEON:
+            continue
         supply = str(row.get("공급변전소(비식별)") or "").strip()
+        if supply and supply not in grouped_supply.setdefault(area, []):
+            grouped_supply[area].append(supply)
+    items = []
+    for area in YEONGAM_EUP_MYEON:
+        supplies = grouped_supply.get(area, [])
         items.append(
             {
                 "eup_myeon": area,
-                "masked_substations": supply,
-                "supply_data_present": bool(supply),
+                "masked_substations": " · ".join(supplies) if supplies else "자료 확인 필요",
+                "supply_data_present": bool(supplies),
                 "permit_register_count": permit_counts.get(area, 0),
-                "notice": "변전소 위치는 비식별 처리된 읍면 단위 자료입니다.",
+                "notice": "변전소 이름은 비식별 처리된 읍면 단위 자료입니다.",
             }
         )
     return {
         "feature": "F4",
-        "name": "영암군 계통 병목 신호",
+        "name": "읍면별 계통 접속 신호",
         "scope": YEONGAM_COUNTY,
         "status": "ready" if items else "source_missing",
         "granularity": "eup_myeon",
         "data_origin": "solverton_reference_snapshot",
         "snapshot_date": "2026-09-03",
         "items": items,
-        "notice": "공급 가능 변전소 자료는 읍면 단위·비식별 값만 제공하므로 선로 여유용량이나 변전소 정확 위치를 의미하지 않습니다.",
+        "notice": "읍면별로 연결 가능한 공급 변전소 신호와 허가 건수를 함께 보여줍니다. 변전소 이름은 비식별 값이므로 실제 여유용량이나 정확한 위치를 뜻하지 않습니다.",
     }
 
 

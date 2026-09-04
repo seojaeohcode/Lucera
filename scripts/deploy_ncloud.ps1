@@ -69,6 +69,7 @@ try {
             "scripts",
             "config.py",
             "data/reference/gazetteer",
+            "data/reference/solverton",
             "data/reference/yeongam_solar_permits_20260301.csv",
             "data/reference/yeongam_solar_geocoded_20260301.json",
             "data/reference/minutes_corpus.json"
