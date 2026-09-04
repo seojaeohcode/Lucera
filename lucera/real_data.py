@@ -25,6 +25,7 @@ from .db import LuceraDB, stable_id
 from .extract import extract_places, redact_sensitive
 from .keywords import classify_segment
 from .location import normalize_address
+from .ordinance import seed_official_rules
 from .regions import region_for_name
 from .review import rebuild_case_reviews
 
@@ -114,14 +115,17 @@ def load_yeongam_permits(path: str | Path) -> list[dict[str, Any]]:
     return result
 
 
-def select_coordinate_sample(permits: list[dict[str, Any]], per_ri: int = 6) -> list[dict[str, Any]]:
-    """Select 5–7 deterministic map records per ``리`` from the full register.
+def select_coordinate_sample(permits: list[dict[str, Any]], per_ri: int = 4) -> list[dict[str, Any]]:
+    """Select a deterministic, compact map sample per ``리`` from the full register.
 
     All official rows remain in the database. Only the selected rows receive
     coordinates for the demo map, preventing a 1,549-marker cloud. One row
     per parcel address is preferred because several records can share a site.
-    The default of six records per ``리`` keeps the map readable while showing
-    the sub-township distribution. Set ``per_ri`` to zero to geocode every row.
+    The default of four records per ``리`` keeps the map readable while showing
+    the sub-township distribution. For compatibility, the four-record sample
+    is a subset of the former six-record sample, so an existing geocode cache
+    can be reused without new provider calls. Set ``per_ri`` to zero to
+    geocode every row.
     """
 
     if per_ri <= 0:
@@ -150,11 +154,15 @@ def select_coordinate_sample(permits: list[dict[str, Any]], per_ri: int = 6) -> 
         )
         target = min(per_ri, len(candidates))
         if target:
+            # Keep the old six-point selection as the stable superset. This
+            # lets the map density change without invalidating cached coords.
+            stable_target = min(max(target, 6), len(candidates))
             indices = {
-                round(index * (len(candidates) - 1) / max(1, target - 1))
-                for index in range(target)
+                round(index * (len(candidates) - 1) / max(1, stable_target - 1))
+                for index in range(stable_target)
             }
-            selected.extend(candidates[index] for index in sorted(indices))
+            stable_sample = [candidates[index] for index in sorted(indices)]
+            selected.extend(stable_sample[:target])
     return selected
 
 
@@ -546,11 +554,12 @@ def rebuild_real_db(
     minutes_corpus: str | Path,
     *,
     geocode_workers: int = 6,
-    map_sample_per_ri: int = 6,
+    map_sample_per_ri: int = 4,
 ) -> dict[str, Any]:
     db = LuceraDB(db_path)
     try:
         db.initialize(schema_path)
+        rule_count = seed_official_rules(db)
         permits = load_yeongam_permits(permit_csv)
         map_sample = select_coordinate_sample(permits, per_ri=map_sample_per_ri)
         for item in permits:
@@ -568,6 +577,7 @@ def rebuild_real_db(
             "permit_count": permit_count,
             "map_sample_count": len(map_sample),
             "map_sample_per_ri": map_sample_per_ri,
+            "siting_rule_count": rule_count,
             "geocode": geo_report,
             "minutes": minutes_report,
             "permit_meeting_links": link_count,

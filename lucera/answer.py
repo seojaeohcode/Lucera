@@ -71,6 +71,8 @@ SYSTEM_PROMPT = """당신은 태양광 발전시설 설치 예정지 사전점�
 문체와 분량:
 9. 결론은 한 문장, 핵심 근거는 최대 5개, 영상 관찰은 최대 2개, 다음 확인은 최대 4개,
    한계는 최대 1개만 씁니다.
+   연속 대화에서는 conversation_context를 참고하되, 가장 최근 질문에만 답하고
+   이전 답변을 통째로 반복하지 않습니다.
 10. 각 근거와 관찰은 한두 문장, 가능하면 120자 이내로 씁니다. 같은 뜻을 반복하지 않습니다.
 11. "이 항목은", "상태로 남아 있습니다", "담당자가 재확인할 필요가 있습니다"를 반복하지
    말고, "150m로 기준 300m 미충족", "현장 확인 필요"처럼 직접적으로 씁니다.
@@ -507,6 +509,14 @@ def build_prompt_pack(pack: dict[str, Any]) -> dict[str, Any]:
                 "message",
             )
         },
+        "conversation_context": [
+            {
+                "role": item.get("role"),
+                "content": str(item.get("content") or "")[:500],
+            }
+            for item in (pack.get("input", {}).get("conversation_context") or [])[-6:]
+            if isinstance(item, dict)
+        ],
         "location": {
             key: pack.get("location", {}).get(key)
             for key in ("normalized_address", "city_county", "eup_myeon", "ri", "precision", "provider")
@@ -547,6 +557,7 @@ def build_prompt_pack(pack: dict[str, Any]) -> dict[str, Any]:
                 for item in (permit.get("projects") or [])[:MAX_PERMIT_SAMPLES]
             ],
         },
+        "solverton_context": pack.get("analysis", {}).get("solverton_context") or {},
         "limitations": analysis.get("limitations"),
         "map_context": _map_context_summary(pack.get("map_context") or {}),
     }

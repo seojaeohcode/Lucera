@@ -7,13 +7,31 @@ EnvironmentFile). The repository deliberately contains no working API key.
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from lucera.paths import DATA_DIR, DATABASE_PATH as DEFAULT_DATABASE_PATH
 
 
+@lru_cache(maxsize=1)
+def _local_env() -> dict[str, str]:
+    """Read the ignored project .env without putting credentials in source."""
+
+    path = Path(__file__).resolve().parent / ".env"
+    if not path.is_file():
+        return {}
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        key, value = stripped.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
 def _setting(name: str, default: str = "") -> str:
-    return str(os.getenv(name, default)).strip()
+    return str(os.getenv(name) or _local_env().get(name) or default).strip()
 
 
 DATABASE_PATH = Path(_setting("LUCERA_DATABASE_PATH", str(DEFAULT_DATABASE_PATH)))
@@ -24,8 +42,10 @@ PUBLIC_DATA_KEYS = {
     "vworld": _setting("VWORLD_API_KEY"),
 }
 
+DATA_GO_KR_API_KEY = _setting("DATA_GO_KR_API_KEY")
+
 JUSO_ENDPOINT = _setting("JUSO_ENDPOINT", "https://business.juso.go.kr/addrlink/addrLinkApi.do")
-VWORLD_DOMAIN = _setting("VWORLD_DOMAIN", "http://localhost")
+VWORLD_DOMAIN = _setting("VWORLD_DOMAIN", "http://localhost:3000")
 VWORLD_ADDRESS_ENDPOINT = _setting("VWORLD_ADDRESS_ENDPOINT", "https://api.vworld.kr/req/address")
 VWORLD_IMAGE_ENDPOINT = _setting("VWORLD_IMAGE_ENDPOINT", "https://api.vworld.kr/req/image")
 VWORLD_DATA_ENDPOINT = _setting("VWORLD_DATA_ENDPOINT", "https://api.vworld.kr/req/data")

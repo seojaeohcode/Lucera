@@ -531,7 +531,7 @@ CREATE TABLE IF NOT EXISTS siting_rule (
     valid_from TEXT,
     valid_to TEXT,
     severity TEXT NOT NULL DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-    data_origin TEXT NOT NULL DEFAULT 'official' CHECK (data_origin IN ('official', 'synthetic', 'user_input')),
+    data_origin TEXT NOT NULL DEFAULT 'official' CHECK (data_origin IN ('official', 'reference_snapshot', 'synthetic', 'user_input')),
     active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
     metadata_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,

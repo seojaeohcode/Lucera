@@ -36,7 +36,8 @@
     button { cursor: pointer; }
     .shell { width: min(1240px, calc(100% - 40px)); margin: 0 auto; }
     .topbar { display: flex; justify-content: space-between; align-items: center; padding: 24px 0 12px; }
-    .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.04em; font-size: 20px; }
+     .brand { display: flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.04em; font-size: 20px; }
+     .brand-logo { width: 88px; height: 42px; display: block; object-fit: contain; object-position: center; }
     .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px 11px 11px 4px; color: #fff; background: var(--brand); box-shadow: 5px 5px 0 var(--sun-deep); font-size: 17px; }
     .scope-badge { display: inline-flex; gap: 8px; align-items: center; padding: 9px 13px; border: 1px solid #a9d2b6; border-radius: 99px; color: var(--brand); background: #e8f7ed; font-size: 12px; font-weight: 800; }
     .scope-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--brand-bright); box-shadow: 0 0 0 4px #cdebd7; }
@@ -151,19 +152,20 @@
     .map-heading h2 { font-size: 25px; }
     .map-description { margin: -6px 0 12px; color: #45685f; font-size: 11px; }
     .map-counter { color: #fff; background: var(--water-deep); padding: 7px 10px; border-radius: 10px; font-size: 11px; font-weight: 900; }
-    .map-canvas { position: relative; aspect-ratio: 1.1; overflow: hidden; border: 1px solid #a9c6bb; border-radius: 19px; background: #a6cbc0; }
-    .map-canvas::before { content: ""; position: absolute; inset: 0; opacity: .55; background: repeating-linear-gradient(25deg, transparent 0 29px, rgba(255,255,255,.22) 30px 31px), repeating-linear-gradient(115deg, transparent 0 37px, rgba(63,128,118,.18) 38px 39px); }
+     .map-canvas { position: relative; aspect-ratio: 1.1; overflow: hidden; border: 1px solid #a9c6bb; border-radius: 19px; background: #e9e5cf; isolation: isolate; }
+     .map-canvas::before { content: ""; position: absolute; inset: 0; z-index: 2; opacity: .28; pointer-events: none; background: linear-gradient(90deg, rgba(255,255,255,.18), transparent 35%, rgba(240,224,183,.18)); mix-blend-mode: screen; }
     .map-canvas::after { content: "영암군 · 읍·면 지도"; position: absolute; left: 14px; top: 12px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.6); border-radius: 7px; color: #215a57; background: rgba(238, 250, 240, .76); font-size: 10px; font-weight: 900; letter-spacing: .05em; }
-    .map-image { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; opacity: .78; mix-blend-mode: multiply; }
+     .map-base-image { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; filter: saturate(.92) contrast(.97); }
+     .map-image { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; opacity: .76; mix-blend-mode: multiply; }
     .map-canvas.has-imagery::before { opacity: .18; }
     .map-canvas.has-imagery::after { content: "영암군 · VWorld 지도 영상"; color: #fff; background: rgba(23, 61, 54, .76); }
-    .map-river { position: absolute; inset: 20% -10% 10% 50%; border: 20px solid rgba(255,255,255,.32); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(-18deg); }
-    .map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(30, 93, 84, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 93, 84, .12) 1px, transparent 1px); background-size: 20% 20%; }
-    .map-pin { position: absolute; z-index: 3; width: 25px; height: 25px; padding: 0; border: 3px solid #fff9ed; border-radius: 50% 50% 50% 5px; transform: translate(-50%, -100%) rotate(-45deg); box-shadow: 0 4px 10px rgba(23,61,54,.28); }
-    .map-pin span { display: block; width: 9px; height: 9px; margin: 5px; border-radius: 50%; background: #fff; }
-    .map-pin.complaint { background: var(--coral); }
-    .map-pin.permit { background: var(--water-deep); }
-    .map-pin:hover, .map-pin:focus { outline: 4px solid rgba(229,182,90,.55); }
+     .map-river, .map-grid { display: none; }
+     .map-pin { position: absolute; z-index: 5; width: 28px; height: 34px; padding: 0; border: 0; border-radius: 0; background: url('/assets/solarcheck-pin.png') center / contain no-repeat; filter: drop-shadow(0 4px 5px rgba(23,61,54,.28)); transform: translate(-50%, -100%); transition: left .2s ease, top .2s ease, transform .16s ease; }
+     .map-pin span { display: none; }
+     .map-pin.complaint { background-image: url('/assets/solarcheck-pin.png'); }
+     .map-pin.permit { background-image: url('/assets/solarcheck-pin.png'); opacity: .72; transform: translate(-50%, -100%) scale(.78); }
+     .map-pin:hover, .map-pin:focus { outline: 4px solid rgba(230,161,0,.42); transform: translate(-50%, -100%) scale(1.1); }
+     .map-pin.permit:hover, .map-pin.permit:focus { transform: translate(-50%, -100%) scale(.92); }
     .map-area-labels { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
     .map-area-label { position: absolute; pointer-events: auto; transform: translate(-50%, -50%); padding: 4px 7px; border: 1px solid rgba(255,255,255,.82); border-radius: 99px; color: #215a57; background: rgba(242, 252, 245, .84); box-shadow: 0 2px 6px rgba(23,61,54,.12); font-size: 9px; font-weight: 900; white-space: nowrap; }
     .map-area-label:hover, .map-area-label:focus { z-index: 2; outline: 3px solid rgba(229,182,90,.65); }
@@ -206,22 +208,146 @@
     @media (max-width: 920px) { .hero, .workspace, .workspace.page-map { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
     @media (max-width: 560px) { .shell { width: min(100% - 24px, 1240px); } .hero { padding-top: 35px; } .step { padding: 21px; border-radius: 20px; } .form-grid, .result-grid, .details-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } #step-1 .step-header { padding: 21px 21px 18px; } #step-1 .step-body { padding: 18px 21px 0; } #step-1 .intake-assist-row { grid-template-columns: 1fr; } #complaint-form > .actions { margin-left: -21px; margin-right: -21px; padding-left: 21px; padding-right: 21px; } .intake-assist .button { width: 100%; } h1 { font-size: 43px; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+
+    /* Lucera brand refresh: bright, airy and map-led */
+    :root {
+      --brand: #087c4a;
+      --brand-bright: #159d63;
+      --ink: #123b2a;
+      --ink-soft: #4c7763;
+      --paper: #f1faf5;
+      --paper-deep: #dff2e8;
+      --card: rgba(255, 255, 255, .96);
+      --line: #c9e4d5;
+      --sun: #f6bf43;
+      --sun-deep: #e6a100;
+      --sun-pale: #fff5d8;
+      --water: #99d6bd;
+      --water-deep: #1d8b68;
+      --shadow: 0 24px 70px rgba(0, 85, 43, .11);
+    }
+    body { background: linear-gradient(180deg, #eaf8f1 0%, #f5fbf7 58%, #fffdf7 100%); }
+    .topbar { padding: 22px 0 14px; gap: 24px; }
+     .brand { color: var(--ink); font-size: 21px; }
+     .brand-logo + span { padding-left: 12px; border-left: 1px solid #cfe4d6; color: var(--ink-soft); font-size: 13px; }
+     .brand-mark { width: 38px; height: 38px; border-radius: 13px 13px 13px 5px; background: var(--brand); box-shadow: 5px 5px 0 var(--sun); }
+    .topbar-nav { display: flex; align-items: center; gap: 26px; margin-left: auto; }
+    .topbar-nav a { color: var(--ink-soft); text-decoration: none; font-size: 13px; font-weight: 900; letter-spacing: -.02em; }
+    .topbar-nav a:hover, .topbar-nav a:focus { color: var(--brand); text-decoration: underline; text-underline-offset: 5px; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .topbar-cta { padding: 10px 17px; border-radius: 99px; color: var(--brand); background: rgba(255,255,255,.72); border: 1px solid var(--brand-bright); box-shadow: none; font-size: 12px; }
+    .topbar-cta:hover { box-shadow: 0 6px 18px rgba(0, 85, 43, .13); }
+    .hero { position: relative; min-height: 560px; display: grid; place-items: center; overflow: hidden; padding: 74px 0 88px; text-align: center; }
+    .hero > div:not(.hero-art) { position: relative; z-index: 2; max-width: 880px; }
+    .eyebrow { color: var(--brand-bright); font-size: 12px; letter-spacing: .17em; }
+    .hero .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; border: 1px solid #bde2ce; border-radius: 99px; background: rgba(255,255,255,.7); box-shadow: 0 7px 24px rgba(0,85,43,.06); }
+    .hero .eyebrow::before { content: "✦"; color: var(--sun-deep); font-size: 14px; }
+    h1 { max-width: 880px; margin-top: 22px; color: var(--ink); font-family: "Pretendard Variable", "Noto Sans KR", system-ui, sans-serif; font-size: clamp(48px, 7.4vw, 88px); line-height: 1.05; letter-spacing: -.085em; font-weight: 950; }
+    h1 span { color: var(--brand-bright); }
+    .hero-copy { max-width: 620px; margin: 22px auto 0; color: var(--ink-soft); font-size: 16px; letter-spacing: -.03em; }
+    .hero-actions { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 30px; }
+    .hero-cta { min-width: 180px; padding: 15px 24px; border-radius: 99px; color: #fff; background: var(--brand); box-shadow: 5px 6px 0 rgba(230,161,0,.5); font-size: 14px; }
+    .hero-note { color: #6d907d; font-size: 11px; font-weight: 800; }
+    .hero-art { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    .hero-art::before { content: ""; position: absolute; left: 50%; top: 52%; width: min(76vw, 860px); height: min(41vw, 460px); transform: translate(-50%, -50%); border: 1px solid rgba(21,157,99,.14); border-radius: 50%; box-shadow: 0 0 0 28px rgba(255,255,255,.18), 0 0 0 29px rgba(21,157,99,.08); }
+    .hero-art::after { content: ""; position: absolute; inset: 0; opacity: .35; background-image: linear-gradient(rgba(21,157,99,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(21,157,99,.07) 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+    .hero-orbit { position: absolute; left: 50%; top: 52%; width: min(68vw, 760px); height: min(34vw, 390px); transform: translate(-50%, -50%) rotate(-8deg); border: 1px dashed rgba(21,157,99,.22); border-radius: 50%; }
+    .hero-sun { position: absolute; right: 12%; top: 17%; width: 86px; height: 86px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 0 16px rgba(246,191,67,.16), 0 0 0 30px rgba(246,191,67,.07); }
+    .hero-sun::after { content: ""; position: absolute; inset: 23px; border: 2px solid rgba(255,255,255,.7); border-radius: 50%; }
+    .hero-map-chip { position: absolute; left: 7%; top: 25%; padding: 12px 15px; border: 1px solid #b9dfca; border-radius: 13px 13px 13px 4px; color: var(--brand); background: rgba(255,255,255,.88); box-shadow: 0 14px 30px rgba(0,85,43,.1); font-size: 12px; font-weight: 900; transform: rotate(-6deg); }
+    .hero-map-chip::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--brand-bright); box-shadow: 0 0 0 4px #d9f0e3; }
+    .hero-pin-art { position: absolute; right: 10%; bottom: 22%; width: 38px; height: 38px; border: 6px solid #fffdf7; border-radius: 50% 50% 50% 6px; background: var(--brand); box-shadow: 0 8px 18px rgba(0,85,43,.2); transform: rotate(-45deg); }
+    .hero-pin-art::after { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--sun); }
+    .hero-document-art { position: absolute; left: 13%; bottom: 15%; width: 112px; height: 82px; padding: 16px 15px; border: 1px solid #cce8d8; border-radius: 12px; background: rgba(255,255,255,.82); box-shadow: 0 18px 32px rgba(0,85,43,.08); transform: rotate(7deg); }
+    .hero-document-art::before { content: ""; display: block; width: 38px; height: 9px; margin-bottom: 13px; border-radius: 99px; background: var(--brand-bright); }
+    .hero-document-art i { display: block; width: 78%; height: 5px; margin-top: 7px; border-radius: 99px; background: #cce6d7; }
+    .journey-nav { position: relative; z-index: 3; justify-content: center; gap: 8px; padding: 9px; border: 1px solid #cfe6d9; border-radius: 99px; background: rgba(255,255,255,.65); box-shadow: 0 12px 30px rgba(0,85,43,.06); }
+    .journey-nav button { padding: 10px 15px; border-color: transparent; background: transparent; }
+    .journey-nav button.current { color: var(--brand); border-color: #b9dfca; background: #eaf8f0; }
+    .journey-nav button.current i { color: #fff; background: var(--brand); }
+    .workspace { padding-top: 28px; }
+    #step-1 { box-shadow: 0 26px 74px rgba(0,85,43,.13); }
+    .step, .map-card { border-radius: 24px; }
+    .map-card { background: #dff1e8; }
+    .button { border-radius: 99px; }
+    .button.secondary { color: #4b3500; background: var(--sun); }
+    .feature-nav { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px; padding-top: 13px; border-top: 1px solid rgba(169,198,187,.72); }
+    .feature-button { border: 1px solid #b5d7c4; border-radius: 99px; padding: 7px 10px; color: #47756b; background: rgba(255,255,255,.58); font-size: 10px; font-weight: 900; }
+    .feature-button:hover, .feature-button:focus { border-color: var(--brand-bright); outline: none; }
+    .feature-button.active { color: #fff; border-color: var(--brand); background: var(--brand); }
+    .feature-panel { margin-top: 10px; padding: 13px; border: 1px solid #b5d7c4; border-radius: 14px; color: #315f57; background: rgba(255,255,255,.62); }
+    .feature-panel-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .feature-panel h3 { color: var(--ink); font-size: 14px; }
+    .feature-panel small { color: #6d8075; font-size: 10px; }
+    .feature-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+    .feature-metric { padding: 8px; border-radius: 10px; background: rgba(223,242,232,.8); }
+    .feature-metric strong { display: block; color: var(--ink); font-size: 15px; }
+    .feature-metric span { font-size: 9px; }
+    .feature-note { margin-top: 10px; color: #5b796d; font-size: 10px; line-height: 1.5; }
+    .feature-list { display: grid; gap: 6px; margin-top: 10px; }
+    .feature-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; width: 100%; padding: 8px 9px; border: 1px solid #c9e4d5; border-radius: 9px; text-align: left; color: var(--ink); background: rgba(255,255,255,.58); }
+    .feature-row:hover, .feature-row:focus { border-color: var(--brand-bright); outline: none; background: #fffdf8; }
+    .feature-row strong { display: block; font-size: 11px; }
+    .feature-row small { display: block; margin-top: 2px; }
+    .feature-row em { color: var(--brand); font-size: 10px; font-style: normal; font-weight: 900; }
+    .feature-bar { height: 4px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: #dcefe5; }
+    .feature-bar i { display: block; height: 100%; border-radius: inherit; background: var(--sun); }
+    @media (max-width: 760px) { .topbar-nav { display: none; } .topbar-actions .scope-badge { display: none; } .hero { min-height: 500px; padding-top: 56px; } .hero-art::before { width: 92vw; height: 68vw; } .hero-map-chip { left: 2%; top: 19%; transform: scale(.85) rotate(-6deg); } .hero-document-art { left: 2%; bottom: 10%; transform: scale(.76) rotate(7deg); } .hero-sun { right: 3%; top: 13%; transform: scale(.72); } .hero-pin-art { right: 3%; bottom: 17%; transform: scale(.8) rotate(-45deg); } }
+    @media (max-width: 560px) { .topbar { padding-top: 15px; } .hero { min-height: 470px; padding-bottom: 64px; } h1 { font-size: 45px; } .hero-copy { font-size: 14px; } .hero-note { width: 100%; } .journey-nav { justify-content: flex-start; border-radius: 18px; } }
+
+    /* Conversation view: a quiet, mobile-first reading surface with one clear
+       action at the bottom. The summary image is deliberately the last item. */
+    [hidden] { display: none !important; }
+    .chat-notice { padding: 13px 16px 12px; color: #6b756f; background: #fbfcfa; font-size: 11px; line-height: 1.7; }
+    .chat-notice strong { color: var(--brand); }
+    .chat-head { align-items: center; }
+    .chat-count { color: var(--sun-pale); font-size: 11px; font-weight: 900; white-space: nowrap; }
+    .chat-thread { max-height: 560px; min-height: 260px; padding: 20px 16px 24px; background: #fff; }
+    .chat-message { display: flex; align-items: flex-start; gap: 9px; max-width: 100%; }
+    .chat-message.user { justify-content: flex-end; }
+    .chat-avatar { display: grid; place-items: center; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; color: #fff; background: linear-gradient(145deg, #7edc9e, var(--brand-bright)); font-size: 13px; font-weight: 900; }
+    .chat-message .bubble { max-width: min(82%, 470px); padding: 11px 14px 12px; border-radius: 18px 18px 18px 5px; box-shadow: 0 4px 16px rgba(0,85,43,.06); font-size: 13px; line-height: 1.6; }
+    .chat-message.user .bubble { border-radius: 18px 18px 5px 18px; color: #fff; background: var(--brand-bright); }
+    .chat-message .bubble small { margin-bottom: 5px; color: #799083; }
+    .chat-message.user .bubble small { color: #d9f2e3; }
+    .typing-bubble { display: inline-flex; gap: 5px; align-items: center; min-width: 68px; min-height: 42px; }
+    .typing-bubble i { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-bright); animation: typing-dot 1s infinite ease-in-out; }
+    .typing-bubble i:nth-child(2) { animation-delay: .15s; }
+    .typing-bubble i:nth-child(3) { animation-delay: .3s; }
+    @keyframes typing-dot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+    .answer-slide { display: grid; gap: 8px; width: min(86%, 360px); margin: 3px 0 3px 43px; padding: 8px; border: 1px solid #c9e4d5; border-radius: 17px; text-align: left; background: #f5fbf6; box-shadow: 0 8px 22px rgba(0,85,43,.08); }
+    .answer-slide:hover, .answer-slide:focus { border-color: var(--sun-deep); outline: 3px solid rgba(230,161,0,.18); }
+    .answer-slide-image { display: block; width: 100%; height: auto; border-radius: 11px; background: #f2faf4; }
+    .answer-slide-caption { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px 2px; color: var(--ink-soft); font-size: 10px; font-weight: 900; }
+    .answer-slide-caption em { color: var(--brand); font-style: normal; }
+    .chat-form { padding: 11px 12px 13px; background: #fff; }
+    .chat-form textarea { min-height: 52px; max-height: 120px; padding: 12px 13px; border-color: #d7e8dc; border-radius: 16px; resize: vertical; }
+    .chat-tools { gap: 7px; }
+    .chat-tools .button { margin-left: auto; border-radius: 99px; padding: 10px 16px; }
+    .slide-modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 22px; background: rgba(8, 30, 20, .72); backdrop-filter: blur(6px); }
+    .slide-modal-card { position: relative; width: min(680px, 100%); max-height: calc(100vh - 44px); padding: 13px; overflow: auto; border-radius: 22px; background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.25); }
+    .slide-modal-card img { display: block; width: 100%; height: auto; border-radius: 13px; }
+    .slide-modal-close { position: absolute; top: 21px; right: 21px; z-index: 1; width: 34px; height: 34px; border: 0; border-radius: 50%; color: #fff; background: rgba(18,59,42,.82); font-size: 20px; line-height: 1; }
+    @media (max-width: 560px) { .chat-notice { font-size: 10px; } .chat-thread { min-height: 320px; } .answer-slide { width: 92%; margin-left: 43px; } .chat-tools .helper { display: none; } .chat-tools .button { padding: 10px 13px; } }
   </style>
 </head>
 <body>
   <header class="shell topbar">
-    <div class="brand"><span class="brand-mark">L</span><span>Lucera / 영암 민원</span></div>
-    <div id="runtime-badge" class="scope-badge">영암군 전용 베타 · 상태 확인 중</div>
+    <div class="brand"><img class="brand-logo" src="/assets/solarcheck-logo.png" alt="SolarCheck"><span>영암 민원</span></div>
+    <nav class="topbar-nav" aria-label="빠른 이동"><a href="#flow-start">민원 접수</a><a href="#step-2">지도 · 근거</a><a href="#step-3">챗봇</a></nav>
+    <div class="topbar-actions"><div id="runtime-badge" class="scope-badge">영암군 전용 베타 · 상태 확인 중</div><button id="topbar-start" class="button topbar-cta" type="button">시작하기</button></div>
   </header>
 
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
       <div>
         <div class="eyebrow">영암군 민원 사전점검</div>
-        <h1 id="page-title">민원 입력 → AI 분석 → 챗봇</h1>
-        <p class="hero-copy">민원 입력, 분석·지도, 근거 기반 챗봇을 각각 한 화면에서 진행합니다.</p>
+        <h1 id="page-title">민원 입력부터<br><span>AI 분석 · 챗봇까지</span></h1>
+        <p class="hero-copy">주소와 상황만 입력하면 영암군의 지도·허가·회의록 근거를 한 번에 확인합니다.</p>
+        <div class="hero-actions"><button id="hero-start" class="button hero-cta" type="button">민원 접수 시작</button><span class="hero-note">영암군 전용 · 공개 허가 원장 기반</span></div>
         <div id="runtime-status" class="runtime-status" role="status" aria-live="polite"></div>
       </div>
+      <div class="hero-art" aria-hidden="true"><div class="hero-orbit"></div><div class="hero-sun"></div><div class="hero-map-chip">영암군 11개 읍·면</div><div class="hero-pin-art"></div><div class="hero-document-art"><i></i><i></i><i></i></div></div>
     </section>
 
     <nav class="journey-nav" aria-label="사용자 흐름">
@@ -230,7 +356,7 @@
       <button id="nav-3" type="button" data-step="3" disabled><i>3</i> 주소 · 챗봇</button>
     </nav>
 
-    <section class="workspace">
+    <section id="flow-start" class="workspace">
       <div class="flow">
         <section id="step-1" class="step is-active is-view" aria-labelledby="step-title-1">
           <div class="step-header">
@@ -258,7 +384,7 @@
 
         <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
           <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">STEP 3</div><h2 id="step-title-3">주소 입력 · 챗봇</h2><p class="step-description">같은 근거로 계속 질문하세요.</p></div><span id="step-3-label" class="lock-label">대기 중</span></div>
-          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="back-to-analysis" class="button ghost" type="button">이전: 분석·지도</button><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>근거 기반 대화</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="추가 질문을 입력하세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><span class="helper">지도 영상 자동 포함</span><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
+          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="back-to-analysis" class="button ghost" type="button">이전: 분석·지도</button><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span id="chat-count" class="chat-count">대화 0회</span></div><div class="chat-notice"><strong>영암군 근거 기반 챗봇</strong><br>공개 허가 원장·회의록·지도 영상을 함께 검토합니다. 답변은 사전점검 참고자료입니다.</div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="무엇이든 물어보세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><span class="helper">지도 영상 자동 포함</span><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
         </section>
       </div>
 
@@ -266,18 +392,24 @@
         <section class="map-card" aria-labelledby="map-title">
           <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
           <p class="map-description">실제 허가 원장 전체를 바탕으로 리별 대표 핀을 표시합니다. 읍·면을 누른 뒤 리를 선택하면 더 작은 단위의 기록이 열립니다.</p>
-          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
+          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img class="map-base-image" src="/assets/yeongam-map-clean.png" alt="영암군 지형과 산과 물길 일러스트 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 공개 허가 표본</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
           <div id="map-video-note" class="map-video-status">지도 영상은 분석·챗봇 요청에 자동 포함됩니다.</div>
           <div id="area-picker" class="area-picker" aria-label="영암 읍면 선택"></div>
           <div id="ri-picker" class="ri-picker" aria-label="선택한 읍면의 리 선택"></div>
           <div id="area-detail" class="area-detail">읍·면 버튼을 누르면 핀과 지역 요약이 바뀝니다.</div>
           <div id="pin-detail" class="pin-detail">핀을 선택하면 주소와 데이터 출처를 확인할 수 있습니다.</div>
+          <div class="feature-nav" aria-label="기획 기능"><button class="feature-button active" type="button" data-feature="f1">F1 조례</button><button class="feature-button" type="button" data-feature="f3">F3 누적</button><button class="feature-button" type="button" data-feature="f4">F4 계통</button></div>
+          <div id="feature-panel" class="feature-panel" aria-live="polite">영암군 기능 데이터를 불러오는 중입니다.</div>
         </section>
       </aside>
     </section>
     <div class="footnote">영암군 전용 · 공개 허가 원장 + 실제 회의록</div>
   </main>
+
+  <div id="slide-modal" class="slide-modal" hidden role="dialog" aria-modal="true" aria-labelledby="slide-modal-title">
+    <div class="slide-modal-card"><button id="slide-modal-close" class="slide-modal-close" type="button" aria-label="슬라이드 닫기">×</button><h2 id="slide-modal-title" class="sr-only">AI 답변 요약</h2><img id="slide-modal-image" alt="AI 답변 요약 이미지"></div>
+  </div>
 
   <script>
     let mapBounds = { west: 126.32, east: 126.86, south: 34.61, north: 34.96 };
@@ -288,7 +420,9 @@
     let mapRiAreas = [];
     let activeArea = '영암군 전체';
     let activeRiKey = '';
+    let activeFeature = 'f1';
     let chatStepReady = false;
+    let chatMessages = [];
     const $ = (id) => document.getElementById(id);
     const jsonHeaders = { 'Content-Type': 'application/json' };
 
@@ -310,6 +444,7 @@
       $('map-sticky').classList.toggle('is-visible', step === 2);
     }
     function numberOrNull(id) { const value = $(id).value.trim(); return value ? Number(value) : null; }
+    function startIntake() { $('flow-start').scrollIntoView({ behavior: 'smooth', block: 'start' }); window.setTimeout(() => $('complaint-address').focus(), 450); }
     function fillExample() {
       $('complaint-address').value = '전라남도 영암군 도포면 영호리 572-5';
       $('complaint-text').value = '집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.';
@@ -390,6 +525,31 @@
       $('area-detail').innerHTML = `<div class="area-detail-head"><h3>${escapeHtml(summary.area)}</h3><small>${escapeHtml(summary.latest_date || '누적 참고')}</small></div><div class="area-stats"><div class="area-stat"><strong>${summary.pin_count}</strong><span>핀</span></div><div class="area-stat"><strong>${summary.permit_count}</strong><span>공개 허가</span></div><div class="area-stat"><strong>${Number(summary.total_capacity_kw || 0).toLocaleString()}kW</strong><span>합계 용량</span></div></div><div class="area-detail-copy"><strong>주요 기록</strong> ${escapeHtml(issueText)}<br><span>${escapeHtml(summary.notice || '')}</span></div><div class="area-pin-list"><div class="area-pin-list-title">${escapeHtml(summary.area)} 기록 · 핀을 눌러 상세 보기</div>${pinRows || '<small>표시할 핀이 없습니다.</small>'}${remainingNote}</div>`;
       $('area-detail').querySelectorAll('[data-pin-id]').forEach((button) => button.addEventListener('click', () => { const pin = pins.find((item) => item.id === button.dataset.pinId); if (pin) showPin(pin); }));
     }
+    function renderFeature(data) {
+      const panel = $('feature-panel');
+      if (!panel) return;
+      if (data.feature === 'F1') {
+        const rule = data.rule || {};
+        panel.innerHTML = `<div class="feature-panel-head"><h3>F1 · ${escapeHtml(data.name || '영암군 조례 기준')}</h3><small>${escapeHtml(rule.effective_date || '시행일 확인 필요')}</small></div><div class="feature-metrics"><div class="feature-metric"><strong>${rule.road_m == null ? '확인 필요' : `${Number(rule.road_m).toLocaleString()}m`}</strong><span>주요도로</span></div><div class="feature-metric"><strong>${rule.residence_5plus_m == null ? '확인 필요' : `${Number(rule.residence_5plus_m).toLocaleString()}m`}</strong><span>주거지</span></div><div class="feature-metric"><strong>${escapeHtml(rule.article || '조문 확인')}</strong><span>근거 조문</span></div></div><p class="feature-note">${escapeHtml(rule.road_scope || '')}<br>${escapeHtml(rule.note || data.notice || '')}</p>`;
+        return;
+      }
+      if (data.feature === 'F3') {
+        const items = data.items || []; const max = Math.max(1, ...items.map((item) => Number(item.permit_count) || 0));
+        const rows = items.slice(0, 6).map((item) => `<button type="button" class="feature-row" data-feature-area="${escapeHtml(item.eup_myeon)}" data-feature-ri="${escapeHtml(item.ri)}"><span><strong>${escapeHtml(item.eup_myeon)} ${escapeHtml(item.ri)}</strong><small>${Number(item.area_ha || 0).toLocaleString()}ha · ${Number(item.map_sample_count || 0)}개 좌표 표본</small><i class="feature-bar"><i style="width:${Math.max(4, ((Number(item.permit_count) || 0) / max) * 100)}%"></i></i></span><em>${Number(item.permit_count || 0).toLocaleString()}건</em></button>`).join('');
+        panel.innerHTML = `<div class="feature-panel-head"><h3>F3 · 리별 누적 허가</h3><small>반경 ${Number(data.radius_m || 1000).toLocaleString()}m</small></div><div class="feature-list">${rows || '<small>영암군 리별 누적 자료가 없습니다.</small>'}</div><p class="feature-note">상위 6개 리를 먼저 보여줍니다. ${escapeHtml(data.notice || '')}</p>`;
+        panel.querySelectorAll('[data-feature-ri]').forEach((button) => button.addEventListener('click', () => selectRi(button.dataset.featureArea, button.dataset.featureRi)));
+        return;
+      }
+      if (data.feature === 'F4') {
+        const items = data.items || []; const rows = items.map((item) => `<div class="feature-row"><span><strong>${escapeHtml(item.eup_myeon || '읍면 미상')}</strong><small>${Number(item.permit_register_count || 0).toLocaleString()}건 · ${escapeHtml(item.notice || '')}</small></span><em>${escapeHtml(item.masked_substations || '자료 없음')}</em></div>`).join('');
+        panel.innerHTML = `<div class="feature-panel-head"><h3>F4 · 읍면 계통 신호</h3><small>비식별 데이터</small></div><div class="feature-list">${rows || '<small>영암군 계통 자료가 없습니다.</small>'}</div><p class="feature-note">${escapeHtml(data.notice || '')}</p>`;
+      }
+    }
+    async function loadFeature(feature) {
+      activeFeature = feature;
+      document.querySelectorAll('[data-feature]').forEach((button) => button.classList.toggle('active', button.dataset.feature === feature));
+      try { renderFeature(await api(`/v1/features/${feature}`)); } catch (error) { $('feature-panel').textContent = `기능 데이터를 불러오지 못했습니다: ${error.message}`; }
+    }
     function issueLabel(code) { return ({ safety_environment: '배수·안전', communication_procedure: '주민협의', grid_connection: '계통', agricultural_land_damage: '농지', landscape_damage: '경관', glare_reflection: '반사광', noise_living_discomfort: '소음', siting_permit_regulatory: '인허가', external_benefit_distribution: '이익공유' }[code] || code); }
     async function selectArea(area) {
       activeArea = area; activeRiKey = ''; renderAreaButtons(); renderRiButtons(); renderPins({ pins, areas: mapAreas, ri_areas: mapRiAreas });
@@ -432,11 +592,41 @@
       $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span></div>`).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
       renderMapContext(analysis.map_context || {});
       $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
+      chatMessages = [];
       setStep(2); $('step-2').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    function escapeXml(value) { return String(value ?? '').replace(/[<>&'"]/g, (char) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[char])); }
+    function slideLines(value, limit = 28) {
+      const text = String(value || '').replace(/\s+/g, ' ').trim(); const lines = [];
+      for (let index = 0; index < text.length; index += limit) lines.push(text.slice(index, index + limit));
+      return lines.length ? lines : ['-'];
+    }
+    function slideText(x, y, value, options = {}) {
+      const lines = Array.isArray(value) ? value : slideLines(value, options.limit || 28); const size = options.size || 24; const color = options.color || '#123b2a'; const weight = options.weight || 500;
+      return `<text x="${x}" y="${y}" fill="${color}" font-size="${size}" font-weight="${weight}" font-family="Pretendard, Noto Sans KR, sans-serif">${lines.map((line, index) => `<tspan x="${x}" dy="${index ? size * 1.35 : 0}">${escapeXml(line)}</tspan>`).join('')}</text>`;
+    }
+    function slideDataUrl(slide) {
+      const reasons = (slide?.reasons || []).slice(0, 3); const checks = (slide?.checks || []).slice(0, 3); const coordinate = slide?.coordinate?.latitude != null ? `${Number(slide.coordinate.latitude).toFixed(5)}, ${Number(slide.coordinate.longitude).toFixed(5)}` : '좌표 확인 필요';
+      let y = 410; let body = '';
+      reasons.forEach((reason, index) => { const lines = slideLines(reason.body, 31); const cardHeight = Math.max(112, 76 + lines.length * 29); body += `<rect x="64" y="${y}" width="772" height="${cardHeight}" rx="18" fill="#f3faf5" stroke="#c9e4d5"/><circle cx="94" cy="${y + 31}" r="14" fill="#159d63"/><text x="94" y="${y + 39}" text-anchor="middle" fill="#fff" font-size="16" font-weight="800" font-family="Pretendard, sans-serif">${index + 1}</text>${slideText(125, y + 39, reason.title, { size: 22, weight: 800, limit: 30 })}${slideText(125, y + 75, lines, { size: 18, color: '#4c7763', weight: 500 })}`; y += cardHeight + 18; });
+      const checkY = y + 18; const checkHeight = Math.max(104, 54 + checks.length * 27); body += `<rect x="64" y="${checkY}" width="772" height="${checkHeight}" rx="18" fill="#fff7df" stroke="#f0cd7b"/>${slideText(91, checkY + 36, '다음 확인', { size: 19, color: '#8a6200', weight: 800 })}${checks.map((item, index) => slideText(91, checkY + 67 + index * 25, `· ${item}`, { size: 16, color: '#6b5a2e', weight: 500, limit: 60 })).join('')}`;
+      const slideHeight = Math.max(1080, checkY + checkHeight + 90); const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="${slideHeight}" viewBox="0 0 900 ${slideHeight}"><rect width="900" height="${slideHeight}" fill="#fffdf8"/><rect width="900" height="14" fill="#00552b"/><circle cx="774" cy="80" r="46" fill="#f6bf43" opacity=".35"/><circle cx="774" cy="80" r="23" fill="#e6a100"/><text x="64" y="80" fill="#159d63" font-size="18" font-weight="800" font-family="Pretendard, Noto Sans KR, sans-serif">LUCERA · 영암군</text>${slideText(64, 142, slide?.title || '민원 사전점검', { size: 38, weight: 850, limit: 30 })}${slideText(64, 196, slide?.address || '영암군', { size: 18, color: '#6b756f', weight: 500, limit: 42 })}<rect x="64" y="235" width="772" height="132" rx="22" fill="#00552b"/><text x="94" y="276" fill="#bfe7ce" font-size="16" font-weight="800" font-family="Pretendard, Noto Sans KR, sans-serif">검토 요약</text>${slideText(94, 323, slide?.conclusion || '검토 자료 생성', { size: 30, color: '#fff', weight: 850, limit: 25 })}<text x="64" y="390" fill="#6b756f" font-size="16" font-family="Pretendard, Noto Sans KR, sans-serif">핵심 근거</text>${body}<text x="64" y="${slideHeight - 35}" fill="#6b756f" font-size="15" font-family="Pretendard, Noto Sans KR, sans-serif">${escapeXml(coordinate)} · 사전점검 참고자료</text></svg>`;
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+    function openSlide(slide) { if (!slide) return; $('slide-modal-image').src = slideDataUrl(slide); $('slide-modal').hidden = false; $('slide-modal-close').focus(); }
+    function renderSlide(message) {
+      const slide = message?.metadata?.slide; if (!slide) return null;
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'answer-slide'; button.setAttribute('aria-label', 'AI 답변 요약 슬라이드 크게 보기');
+      const image = document.createElement('img'); image.className = 'answer-slide-image'; image.src = slideDataUrl(slide); image.alt = `${slide.title || 'AI 답변'} 요약 이미지`; button.appendChild(image);
+      const caption = document.createElement('span'); caption.className = 'answer-slide-caption'; caption.innerHTML = '<span>답변 요약 슬라이드</span><em>눌러서 크게 보기</em>'; button.appendChild(caption); button.addEventListener('click', () => openSlide(slide)); return button;
+    }
     function renderMessages(messages) {
-      const thread = $('chat-thread'); thread.innerHTML = '';
-      (messages || []).forEach((message) => { const bubble = document.createElement('div'); bubble.className = `bubble ${message.role === 'user' ? 'user' : ''}`; const label = message.role === 'user' ? '나' : 'Lucera AI'; bubble.innerHTML = `<small>${label}</small>`; const content = document.createElement('div'); content.textContent = message.content || ''; bubble.appendChild(content); thread.appendChild(bubble); }); thread.scrollTop = thread.scrollHeight;
+      chatMessages = Array.isArray(messages) ? messages : []; const thread = $('chat-thread'); thread.innerHTML = '';
+      chatMessages.forEach((message) => { const row = document.createElement('div'); row.className = `chat-message ${message.role === 'user' ? 'user' : 'assistant'}`; if (message.role !== 'user') { const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); } const bubble = document.createElement('div'); bubble.className = `bubble ${message.role === 'user' ? 'user' : ''}`; const label = message.role === 'user' ? '나' : 'Lucera AI'; const labelNode = document.createElement('small'); labelNode.textContent = label; bubble.appendChild(labelNode); const content = document.createElement('div'); content.textContent = message.content || ''; bubble.appendChild(content); if (message.metadata?.image_received) { const imageNote = document.createElement('small'); imageNote.className = 'image-received'; imageNote.textContent = '현장 이미지 첨부'; bubble.appendChild(imageNote); } row.appendChild(bubble); thread.appendChild(row); const slide = renderSlide(message); if (slide) thread.appendChild(slide); });
+      $('chat-count').textContent = `대화 ${chatMessages.filter((message) => message.role === 'user').length}회`; thread.scrollTop = thread.scrollHeight;
+    }
+    function appendTyping() {
+      const row = document.createElement('div'); row.className = 'chat-message assistant'; row.id = 'chat-typing'; const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); const bubble = document.createElement('div'); bubble.className = 'bubble typing-bubble'; bubble.setAttribute('aria-label', '답변 작성 중'); bubble.innerHTML = '<i></i><i></i><i></i>'; row.appendChild(bubble); $('chat-thread').appendChild(row); $('chat-thread').scrollTop = $('chat-thread').scrollHeight;
     }
     $('complaint-form').addEventListener('submit', async (event) => {
       event.preventDefault(); setStatus('complaint-status', '주소 좌표를 확인하고 영암 근거를 연결하는 중입니다…');
@@ -453,15 +643,17 @@
       setStep(3); $('step-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
       if ($('chat-content').hidden) $('chat-address').focus();
     }
-    $('fill-example').addEventListener('click', fillExample); $('reload-pins').addEventListener('click', loadPins);
+    $('fill-example').addEventListener('click', fillExample); $('reload-pins').addEventListener('click', loadPins); $('hero-start').addEventListener('click', startIntake); $('topbar-start').addEventListener('click', startIntake); document.querySelectorAll('[data-feature]').forEach((button) => button.addEventListener('click', () => loadFeature(button.dataset.feature)));
     $('next-button').addEventListener('click', openChatStep);
     $('back-to-intake').addEventListener('click', () => setStep(1)); $('back-to-analysis').addEventListener('click', () => setStep(2));
     document.querySelectorAll('.journey-nav button').forEach((button) => button.addEventListener('click', () => setStep(Number(button.dataset.step))));
-    $('address-confirm').addEventListener('click', () => { const address = $('chat-address').value.trim(); if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error'); $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address; renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]); $('chat-message').focus(); setStatus('address-status', '주소가 저장된 민원·근거와 연결되었습니다.', 'success'); });
+    $('address-confirm').addEventListener('click', async () => { const address = $('chat-address').value.trim(); if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error'); $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address; setStatus('address-status', '저장된 대화를 불러오는 중입니다…'); try { const conversation = await api(`/v1/conversations/${currentConversationId}`); renderMessages(conversation.messages || []); setStatus('address-status', '같은 민원과 근거를 이어서 대화할 수 있습니다.', 'success'); } catch (error) { renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]); setStatus('address-status', '초기 분석을 표시했습니다. 이어서 질문할 수 있습니다.', 'success'); } $('chat-message').focus(); });
     $('chat-image').addEventListener('change', () => { const file = $('chat-image').files[0]; $('image-name').textContent = file ? `${file.name} 선택됨` : '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; });
     function readImage(file) { return new Promise((resolve, reject) => { if (!file) return resolve(null); if (file.size > 1.5 * 1024 * 1024) return reject(new Error('이미지는 1.5MB 이하만 첨부할 수 있습니다.')); const reader = new FileReader(); reader.onload = () => { const value = String(reader.result || ''); resolve({ media_type: file.type, data: value.split(',')[1] || '' }); }; reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.readAsDataURL(file); }); }
-    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); setStatus('chat-status', '저장된 영암 근거와 지도 영상을 다시 조회해 답변하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: $('chat-message').value, image, include_map_context: true }) }); renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); $('chat-message').value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '같은 대화에 답변을 저장했습니다.', 'success'); } catch (error) { setStatus('chat-status', error.message, 'error'); } });
-    setStep(1); loadRuntimeStatus(); loadPins();
+    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); const input = $('chat-message'); const messageText = input.value.trim(); if (!messageText) return; const submit = $('chat-form button[type="submit"]'); submit.disabled = true; chatMessages = [...chatMessages, { role: 'user', content: messageText }]; renderMessages(chatMessages); appendTyping(); setStatus('chat-status', '영암 근거와 지도 영상을 함께 다시 확인하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: messageText, image, include_map_context: true }) }); renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success'); } catch (error) { document.getElementById('chat-typing')?.remove(); setStatus('chat-status', error.message, 'error'); } finally { submit.disabled = false; } });
+    $('chat-message').addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') $('chat-form').requestSubmit(); });
+    $('slide-modal-close').addEventListener('click', () => { $('slide-modal').hidden = true; }); $('slide-modal').addEventListener('click', (event) => { if (event.target === $('slide-modal')) $('slide-modal').hidden = true; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') $('slide-modal').hidden = true; });
+    setStep(1); loadRuntimeStatus(); loadPins(); loadFeature(activeFeature);
   </script>
 </body>
 </html>

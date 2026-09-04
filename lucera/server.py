@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 import os
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -26,6 +27,7 @@ from .regions import parent_region_catalog, region_catalog
 from .regional_collect import collect_regional
 from .rag import RAGService
 from .search import SearchService
+from .solverton_features import feature_overview, yeongam_f1, yeongam_f3, yeongam_f4
 from .vworld import VWorldClient
 
 
@@ -108,6 +110,24 @@ class LuceraHandler(BaseHTTPRequestHandler):
             with self.db.lock:
                 self._json(yeongam_pins(self.db))
             return
+        if path == "/v1/features":
+            with self.db.lock:
+                self._json(feature_overview(self.db))
+            return
+        if path == "/v1/features/f1":
+            self._json(yeongam_f1())
+            return
+        if path == "/v1/features/f3":
+            with self.db.lock:
+                self._json(yeongam_f3(self.db))
+            return
+        if path == "/v1/features/f4":
+            with self.db.lock:
+                self._json(yeongam_f4(self.db))
+            return
+        if path.startswith("/assets/"):
+            self._static_asset(path.removeprefix("/assets/"))
+            return
         if path in {"/", "/index.html"}:
             body = (WEB_DIR / "index.html").read_bytes()
             self._headers(200, "text/html; charset=utf-8")
@@ -165,6 +185,29 @@ class LuceraHandler(BaseHTTPRequestHandler):
             self._json(context or {"error": "permit_not_found"}, 200 if context else 404)
             return
         self._json({"error": "not_found"}, 404)
+
+    def _static_asset(self, requested: str) -> None:
+        """Serve only files below web/assets; never treat the URL as a path directly."""
+
+        asset_root = (WEB_DIR / "assets").resolve()
+        candidate = (asset_root / unquote(requested)).resolve()
+        try:
+            candidate.relative_to(asset_root)
+        except ValueError:
+            self._json({"error": "not_found"}, 404)
+            return
+        if not candidate.is_file():
+            self._json({"error": "not_found"}, 404)
+            return
+        body = candidate.read_bytes()
+        content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(body)
 
     def _map_image(self, cache_key: str) -> None:
         """Serve a cached VWorld tile by its content key.

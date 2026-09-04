@@ -53,8 +53,8 @@ def main() -> int:
     parser.add_argument(
         "--map-sample-per-ri",
         type=int,
-        default=6,
-        help="리별 지도용 실제 허가 표본 수(기본 6, 5~7 권장). 0이면 공식 원장 전체를 지오코딩합니다.",
+        default=4,
+        help="리별 지도용 실제 허가 표본 수(기본 4, 데이터가 적은 리는 있는 만큼). 0이면 공식 원장 전체를 지오코딩합니다.",
     )
     parser.add_argument("--replace", action="store_true", help="atomically replace --db and retain a backup")
     args = parser.parse_args()

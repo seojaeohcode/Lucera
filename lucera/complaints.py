@@ -78,6 +78,37 @@ def _link_evidence(db: LuceraDB, complaint_id: str, result: dict[str, Any]) -> i
     return links
 
 
+def _answer_slide_payload(result: dict[str, Any]) -> dict[str, Any]:
+    """Keep a compact, presentation-ready summary beside each AI turn."""
+
+    analysis = result.get("analysis") or {}
+    location = result.get("location") or {}
+    cards: list[dict[str, str]] = []
+    for card in (analysis.get("reason_cards") or [])[:3]:
+        title = " ".join(str(card.get("title") or "").split())
+        body = " ".join(str(card.get("statement") or "").split())
+        if title and body:
+            cards.append({"title": title[:60], "body": body[:150]})
+    checks: list[str] = []
+    for card in analysis.get("reason_cards") or []:
+        item = " ".join(str(card.get("next_check") or "").split())
+        if item and item not in checks:
+            checks.append(item[:100])
+        if len(checks) >= 3:
+            break
+    return {
+        "title": "영암군 민원 사전점검",
+        "address": str(location.get("normalized_address") or "영암군").strip()[:100],
+        "conclusion": str(analysis.get("conclusion_label") or "검토 자료 생성").strip()[:60],
+        "reasons": cards,
+        "checks": checks,
+        "coordinate": {
+            "latitude": location.get("latitude"),
+            "longitude": location.get("longitude"),
+        },
+    }
+
+
 def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
     text = " ".join(str(payload.get("text") or payload.get("message") or "").split())
     address = " ".join(str(payload.get("address") or "").split())
@@ -141,7 +172,8 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
         (conversation_id, complaint_id, normalized_address, latitude, longitude, _json({"scope": "yeongam"})),
     )
     _insert_message(db, conversation_id, "user", text, {"kind": "complaint_intake", "image_received": bool(image)})
-    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "initial_analysis"})
+    slide = _answer_slide_payload(result)
+    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "initial_analysis", "slide": slide})
     links = _link_evidence(db, complaint_id, result)
     db.conn.execute("UPDATE chat_conversation SET updated_at=? WHERE conversation_id=?", (_now(), conversation_id))
     db.commit()
@@ -150,6 +182,7 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
         "conversation_id": conversation_id,
         "complaint": get_complaint(db, complaint_id),
         "analysis": result,
+        "answer_slide": slide,
         "evidence_links": links,
     }
 
@@ -209,6 +242,11 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
         "scope": "yeongam",
         "include_comparative": False,
         "include_map_context": True,
+        "conversation_context": [
+            {"role": item.get("role"), "content": item.get("content", "")}
+            for item in conversation.get("messages", [])[-6:]
+            if item.get("role") in {"user", "assistant"}
+        ],
     }
     if image:
         rag_payload["image"] = image
@@ -217,7 +255,8 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
     if address_changed and (resolved.get("latitude") is None or resolved.get("longitude") is None):
         raise ValueError("새 주소의 좌표를 확인하지 못했습니다. 더 구체적인 영암군 주소를 입력해 주세요.")
     _insert_message(db, conversation_id, "user", message, {"kind": "follow_up", "image_received": bool(image)})
-    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "follow_up_analysis"})
+    slide = _answer_slide_payload(result)
+    _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "follow_up_analysis", "slide": slide})
     db.conn.execute("UPDATE chat_conversation SET updated_at=? WHERE conversation_id=?", (_now(), conversation_id))
     if address_changed:
         db.conn.execute(
@@ -227,7 +266,7 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
     if conversation.get("complaint"):
         _link_evidence(db, conversation["complaint"]["complaint_id"], result)
     db.commit()
-    return {"conversation_id": conversation_id, "analysis": result, "messages": get_conversation(db, conversation_id)["messages"]}
+    return {"conversation_id": conversation_id, "analysis": result, "answer_slide": slide, "messages": get_conversation(db, conversation_id)["messages"]}
 
 
 YEONGAM_AREA_ORDER = (
@@ -366,11 +405,11 @@ def yeongam_pins(db: LuceraDB) -> dict[str, Any]:
         "count": len(pins),
         "permit_register_count": permit_register_count,
         "map_pin_count": len(pins),
-        "map_sampling": {"enabled": True, "note": "공식 원장 전체는 DB에 보존하고 리별 5~7건 대표 표본만 지도에 표시"},
+        "map_sampling": {"enabled": True, "note": "공식 원장 전체는 DB에 보존하고 리별 최대 4건 대표 표본만 지도에 표시"},
         "areas": areas,
         "ri_areas": ri_areas,
         "bounds": bounds,
-        "notice": "영암군만 표시합니다. 공식 허가 원장 전체는 DB에 보존하고 리별 5~7건 대표 사례만 지도에 표시합니다. 좌표는 원장 지번 주소를 지오코딩한 결과입니다.",
+        "notice": "영암군만 표시합니다. 공식 허가 원장 전체는 DB에 보존하고 리별 최대 4건 대표 사례만 지도에 표시합니다. 좌표는 원장 지번 주소를 지오코딩한 결과입니다.",
     }
 
 

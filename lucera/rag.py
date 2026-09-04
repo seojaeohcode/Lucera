@@ -21,6 +21,7 @@ import config
 
 from .location import Location, normalize_address
 from .search import SearchService, haversine_m
+from .solverton_features import feature_context_for_location
 from .vworld import VWorldClient
 from .yeongam import require_yeongam, scope_city_county
 
@@ -136,6 +137,15 @@ def normalize_chat_input(payload: dict[str, Any]) -> dict[str, Any]:
 
     latitude = _float(payload.get("latitude"))
     longitude = _float(payload.get("longitude"))
+    conversation_context: list[dict[str, str]] = []
+    raw_context = payload.get("conversation_context")
+    if isinstance(raw_context, list):
+        for item in raw_context[-6:]:
+            if not isinstance(item, dict) or item.get("role") not in {"user", "assistant"}:
+                continue
+            content = " ".join(str(item.get("content") or "").split())
+            if content:
+                conversation_context.append({"role": str(item["role"]), "content": content[:500]})
     normalized = {
         "message": message,
         "address": address,
@@ -153,6 +163,7 @@ def normalize_chat_input(payload: dict[str, Any]) -> dict[str, Any]:
         "include_map_context": bool(payload.get("include_map_context", True)),
         "scope": str(payload.get("scope") or "yeongam"),
         "image": payload.get("image"),
+        "conversation_context": conversation_context,
         # Rule validity is evaluated against this date so a demo can be pinned
         # to a fixed day and still show which rules are not yet in force.
         "as_of": str(payload.get("as_of") or date.today().isoformat()),
@@ -1205,7 +1216,10 @@ class RAGService:
             self.answer_generator = ClaudeAnswerGenerator(LocalAnswerGenerator())
 
     def _retrieve(self, data: dict[str, Any], location: Location) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-        terms, issue_codes = _query_terms(data["message"])
+        history_text = " ".join(
+            item["content"] for item in data.get("conversation_context", []) if item.get("role") == "user"
+        )
+        terms, issue_codes = _query_terms(f"{data['message']} {history_text}".strip())
         search_payload = {
             "address": data["address"],
             "latitude": data["latitude"],
@@ -1263,6 +1277,7 @@ class RAGService:
         }
         process_events = _load_process_events(self.db, {str(case_id) for case_id in case_ids})
         permit_analysis = _load_permit_projects(self.db, data, location)
+        solverton_context = feature_context_for_location(self.db, location.eup_myeon, location.ri)
         rule_analysis = self.rules.evaluate(data, location, map_context)
         issue_counts = _issue_counts(results)
         repeated_codes = [code for code, count in issue_counts.items() if count >= 2]
@@ -1296,6 +1311,7 @@ class RAGService:
             "reason_cards": _reason_cards(results, rule_analysis, process_events, permit_analysis),
             "timeline": _timeline(process_events),
             "permit_analysis": permit_analysis,
+            "solverton_context": solverton_context,
             "limitations": limitations,
             "method": {
                 "retrieval": "existing_search_hybrid_fts_location",

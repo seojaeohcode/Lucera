@@ -54,6 +54,8 @@ class YeongamFlowTests(unittest.TestCase):
         self.assertGreaterEqual(result["evidence_links"], 1)
         conversation = get_conversation(self.db, result["conversation_id"])
         self.assertEqual([item["role"] for item in conversation["messages"]], ["user", "assistant"])
+        self.assertIn("slide", conversation["messages"][-1]["metadata"])
+        self.assertEqual(result["answer_slide"]["title"], "영암군 민원 사전점검")
         complaint_pin = next(pin for pin in yeongam_pins(self.db)["pins"] if pin["kind"] == "complaint")
         self.assertEqual(complaint_pin["id"], result["complaint_id"])
 
@@ -77,6 +79,7 @@ class YeongamFlowTests(unittest.TestCase):
         self.assertEqual(follow_up["conversation_id"], initial["conversation_id"])
         self.assertEqual(len(follow_up["messages"]), 4)
         self.assertTrue(follow_up["messages"][-2]["metadata"]["image_received"])
+        self.assertIn("slide", follow_up["messages"][-1]["metadata"])
 
     def test_non_yeongam_complaints_are_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "영암군"):

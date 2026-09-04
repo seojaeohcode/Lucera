@@ -518,7 +518,7 @@ CREATE TABLE IF NOT EXISTS siting_rule (
     valid_from date,
     valid_to date,
     severity text NOT NULL DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-    data_origin text NOT NULL DEFAULT 'official' CHECK (data_origin IN ('official', 'synthetic', 'user_input')),
+    data_origin text NOT NULL DEFAULT 'official' CHECK (data_origin IN ('official', 'reference_snapshot', 'synthetic', 'user_input')),
     active boolean NOT NULL DEFAULT true,
     metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamptz NOT NULL DEFAULT now(),

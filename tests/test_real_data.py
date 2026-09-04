@@ -16,10 +16,10 @@ class RealYeongamDataTests(unittest.TestCase):
 
     def test_map_sample_is_balanced_by_ri_and_never_duplicates_parcel(self) -> None:
         path = Path(__file__).parents[1] / "data" / "reference" / "yeongam_solar_permits_20260301.csv"
-        sample = select_coordinate_sample(load_yeongam_permits(path), per_ri=6)
+        sample = select_coordinate_sample(load_yeongam_permits(path), per_ri=4)
         group_counts = Counter((item["eup_myeon"], item["ri"]) for item in sample)
         self.assertEqual(len(sample), len({item["source_record_key"] for item in sample}))
-        self.assertTrue(all(count <= 6 for count in group_counts.values()))
+        self.assertTrue(all(count <= 4 for count in group_counts.values()))
         self.assertGreaterEqual(len(group_counts), 100)
 
 

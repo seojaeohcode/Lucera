@@ -139,24 +139,35 @@ class SitingRuleTests(unittest.TestCase):
         check = self._checks(250)["national-cap-2026-solar-residence"]
         self.assertEqual(check["status"], "pass")
 
-    def test_distance_inside_the_cap_needs_the_local_article(self) -> None:
+    def test_distance_inside_the_cap_uses_the_yeongam_article(self) -> None:
         check = self._checks(150)["national-cap-2026-solar-residence"]
-        # Not "fail": the ordinance may require less than the ceiling.
         self.assertEqual(check["status"], "check_required")
+        self.assertEqual(self._checks(150)["yeongam-ordinance-2026-residence-5plus"]["status"], "fail")
 
     def test_cap_before_its_effective_date_says_so(self) -> None:
         check = self._checks(250, as_of="2026-09-01")["national-cap-2026-solar-residence"]
         self.assertIn("2026-09-18", check["reason"])
 
-    def test_missing_local_ordinance_is_reported_not_assumed(self) -> None:
+    def test_loaded_local_ordinance_is_reported_with_source(self) -> None:
         checks = self._checks(150)
-        self.assertIn("ordinance-not-loaded", checks)
-        self.assertEqual(checks["ordinance-not-loaded"]["status"], "check_required")
+        self.assertNotIn("ordinance-not-loaded", checks)
+        self.assertEqual(checks["yeongam-ordinance-2026-road"]["source"]["data_origin"], "reference_snapshot")
 
     def test_area_inputs_produce_separate_site_and_installation_checks(self) -> None:
         checks = self._checks(150)
         self.assertEqual(checks["site-coverage-ratio"]["observed_value"], 0.692)
         self.assertEqual(checks["site-area-per-kw-advisory"]["observed_value"], 14.44)
+
+
+class ConversationContextTests(unittest.TestCase):
+    def test_follow_up_context_is_trimmed_for_rag_and_prompt(self) -> None:
+        context = [{"role": "user", "content": f"질문 {index} " + "x" * 700} for index in range(8)]
+        data = normalize_chat_input({"address": "전라남도 영암군 삼호읍 산호리 1", "message": "그럼 배수는?", "conversation_context": context})
+        self.assertEqual(len(data["conversation_context"]), 6)
+        self.assertTrue(data["conversation_context"][0]["content"].startswith("질문 2 "))
+        self.assertEqual(len(data["conversation_context"][0]["content"]), 500)
+        prompt = build_prompt_pack({"input": data, "analysis": {}, "grounding": {}})
+        self.assertEqual(len(prompt["conversation_context"]), 6)
 
 
 class AnswerGuardTests(unittest.TestCase):

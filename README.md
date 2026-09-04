@@ -9,6 +9,7 @@
 3. **영암 전용 지도** — `/v1/map/pins`가 공식 허가 원장에서 고른 실제 대표 핀과 사용자가 방금 접수한 민원을 표시합니다. 화면의 지도는 영암군 범위만 노출합니다.
 4. **다음** — 저장된 주소·좌표를 유지한 채 대화 단계로 진입합니다.
 5. **연속·멀티모달 대화** — `chat_conversation`과 `chat_message`에 문맥을 누적하며, 추가 질문과 PNG/JPEG/WEBP/GIF 현장 이미지를 함께 받을 수 있습니다. Claude 키가 없으면 동일한 근거팩을 결정론적 답변기로 처리합니다.
+6. **Solverton F 기능 연결** — F1 영암 조례 기준, F3 리별 누적 허가, F4 읍면 계통 신호를 영암 전용 API와 지도 카드로 제공합니다.
 
 화면에서 1·2·3단계를 항상 확인할 수 있고, 잠긴 단계는 앞 단계가 끝나면 열립니다. 공식 허가 원장 전체는 DB에 보존하되, 지도는 리별 실제 대표 사례를 5~7건 정도 표시해 발표 화면의 밀도를 유지합니다. 회의록은 영암군 실제 문서 12건과 136개 문단을 사용합니다.
 
@@ -18,7 +19,7 @@ Windows PowerShell에서 프로젝트 루트에서 실행합니다.
 
 ```powershell
 $py = 'C:\Python313\python.exe'
-& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 6 --geocode-workers 12
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 4 --geocode-workers 12
 & $py -m lucera.cli serve --host 127.0.0.1 --port 8000
 ```
 
@@ -41,6 +42,10 @@ CLIK_API_KEY=
 ```
 
 `LUCERA_ANSWER_MODE=local`은 외부 AI 호출 없이 근거 기반 템플릿으로 실행합니다. `ANTHROPIC_API_KEY`가 있으면 Claude가 최종 문장을 작성하지만, 규칙 계산·거리·인용 검증은 로컬에서 먼저 수행됩니다. VWorld 키가 있으면 선택한 지도 영상이 AI 이미지 입력으로 추가됩니다.
+
+## Solverton F 기능 API
+
+`GET /v1/features/f1`은 법제처 조례 스냅샷에서 영암군의 도로·주거 이격거리와 조문을 반환합니다. `GET /v1/features/f3`은 영암군 리별 누적 허가 건수·면적과 지도 좌표 표본을 반환하고, `GET /v1/features/f4`는 읍면 단위 비식별 한전 공급변전소 신호와 허가 건수를 반환합니다. 원본 파일은 `data/reference/solverton/`에 provenance와 함께 보관하며, 다른 시군 데이터는 API 응답에 노출하지 않습니다.
 
 ## HTTP API
 
@@ -90,14 +95,14 @@ CLIK_API_KEY=
 실제 화면용 DB는 [scripts/rebuild_yeongam_real_db.py](scripts/rebuild_yeongam_real_db.py)가 새 SQLite 파일에 다음을 적재합니다.
 
 - 공공데이터포털 영암군 태양광 허가정보 원장 1,549건
-- 원장 지번 주소에서 보정한 지도용 실제 좌표 표본(리별 최대 6건, 데이터가 적은 리는 있는 만큼)
+- 원장 지번 주소에서 보정한 지도용 실제 좌표 표본(리별 최대 4건, 데이터가 적은 리는 있는 만큼)
 - 영암군 실제 회의록 12건·136개 문단·쟁점·처리 과정
 - 허가 사례와 회의록 문단의 읍·면·리·태양광 맥락 연결
 
 지도 표본은 합성 데이터가 아니다. 원장 전체를 DB에 보존하고, 실제 주소를 지오코딩한 리별 대표 사례만 지도에 표시한다. 좌표에는 지오코더, 매칭 점수, 원 주소, 처리 상태를 함께 저장한다.
 
 ```powershell
-& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 6 --geocode-workers 12
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 4 --geocode-workers 12
 ```
 
 `--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다. `--map-sample-per-ri 0`을 지정할 때만 공식 원장 전체를 지오코딩합니다.
@@ -136,4 +141,4 @@ Terraform 인프라는 `infra/ncloud/`에 있고, 배포 스크립트는 Terrafo
 & .\scripts\deploy_ncloud.ps1
 ```
 
-배포는 코드·스키마·실제 원장·재생성 스크립트를 업로드하고, 서버에서 서비스를 멈춘 뒤 `rebuild_yeongam_real_db.py --map-sample-per-ri 6`으로 실제 영암 DB를 재생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
+배포는 코드·스키마·실제 원장·재생성 스크립트를 업로드하고, 서버에서 서비스를 멈춘 뒤 `rebuild_yeongam_real_db.py --map-sample-per-ri 4`으로 실제 영암 DB를 재생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
