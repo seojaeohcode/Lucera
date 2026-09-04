@@ -265,7 +265,7 @@
       <aside id="map-sticky" class="map-sticky">
         <section class="map-card" aria-labelledby="map-title">
           <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
-          <p class="map-description">실제 허가 원장 전체를 바탕으로 리별 대표 핀을 표시합니다. 핀 또는 지도 안 읍·면 이름을 누르면 지역 기록과 상세가 열립니다.</p>
+          <p class="map-description">실제 허가 원장 전체를 바탕으로 리별 대표 핀을 표시합니다. 읍·면을 누른 뒤 리를 선택하면 더 작은 단위의 기록이 열립니다.</p>
           <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 공개 허가 표본</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
           <div id="map-video-note" class="map-video-status">지도 영상은 분석·챗봇 요청에 자동 포함됩니다.</div>
@@ -421,7 +421,7 @@
       }
     }
     function escapeHtml(value) { return String(value || '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
-    async function loadPins() { try { renderPins(await api('/v1/map/pins')); } catch (error) { $('pin-counter').textContent = '지도 연결 실패'; $('pin-detail').textContent = error.message; } }
+    async function loadPins() { try { activeArea = '영암군 전체'; activeRiKey = ''; renderPins(await api('/v1/map/pins')); } catch (error) { $('pin-counter').textContent = '지도 연결 실패'; $('pin-detail').textContent = error.message; } }
     function renderAnalysis(result) {
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
       currentComplaint = result.complaint; currentConversationId = result.conversation_id;
