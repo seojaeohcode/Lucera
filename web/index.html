@@ -321,6 +321,35 @@
     .feature-row em { color: var(--brand); font-size: 10px; font-style: normal; font-weight: 900; }
     .feature-bar { height: 4px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: #dcefe5; }
     .feature-bar i { display: block; height: 100%; border-radius: inherit; background: var(--sun); }
+    .analysis-summary { margin-bottom: 16px; }
+    .analysis-summary .result-card { min-height: 112px; }
+    .analysis-summary .result-card strong { color: var(--ink); }
+    .analysis-brief, .analysis-next, .analysis-original, .analysis-evidence { margin-top: 14px; padding: 16px; border: 1px solid #d7e8dc; border-radius: 17px; background: #fbfdf9; }
+    .analysis-brief-head, .analysis-section-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .analysis-brief-head h3, .analysis-section-head h3 { color: var(--ink); }
+    .analysis-brief-head span { color: var(--ink-soft); font-size: 10px; }
+    .analysis-reasons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 11px; }
+    .insight-card { padding: 12px; border: 1px solid #d7e8dc; border-radius: 13px; background: #fff; }
+    .insight-card[data-severity="high"] { border-color: #e7c979; background: #fffdf5; }
+    .insight-card-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .insight-number { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 8px; color: #fff; background: var(--brand); font-size: 11px; font-weight: 900; }
+    .insight-tag { padding: 4px 7px; border-radius: 99px; color: var(--brand); background: #eaf8f0; font-size: 9px; font-weight: 900; }
+    .insight-card[data-status="fail"] .insight-tag { color: #8b5c00; background: var(--sun-pale); }
+    .insight-card h4 { margin-top: 9px; color: var(--ink); font-size: 13px; line-height: 1.4; }
+    .insight-card p { margin-top: 5px; color: var(--ink-soft); font-size: 11px; line-height: 1.55; }
+    .analysis-checks { display: grid; gap: 7px; margin-top: 10px; }
+    .analysis-check { display: flex; gap: 8px; align-items: flex-start; color: #45685f; font-size: 11px; line-height: 1.5; }
+    .analysis-check::before { content: "✓"; display: grid; place-items: center; flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; color: #fff; background: var(--brand-bright); font-size: 10px; font-weight: 900; }
+    .analysis-original { padding: 0; overflow: hidden; background: #fffdf8; }
+    .analysis-original summary, .analysis-evidence summary { padding: 13px 15px; cursor: pointer; color: var(--ink); font-size: 12px; font-weight: 900; }
+    .analysis-original .answer-box { margin: 0 12px 12px; border-left-width: 3px; font-size: 11px; line-height: 1.55; }
+    .analysis-evidence { padding: 0; background: #fffdf8; }
+    .analysis-evidence .evidence-list { margin: 0; padding: 0 12px 12px; }
+    .analysis-evidence .evidence-item { padding: 10px 11px; font-size: 11px; }
+    .analysis-evidence .evidence-item span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-height: 1.45; }
+    .analysis-evidence .evidence-item small { margin-top: 5px; }
+    .analysis-note { margin-top: 10px; color: #7a8a82; font-size: 10px; line-height: 1.5; }
+    @media (max-width: 700px) { .analysis-reasons { grid-template-columns: 1fr; } }
     @media (min-width: 921px) {
       .shell { width: min(1480px, calc(100% - 36px)); }
       .workspace.page-map { grid-template-columns: minmax(0, 1.14fr) minmax(480px, .86fr); }
@@ -425,7 +454,7 @@
 
         <section id="step-2" class="step is-locked" aria-labelledby="step-title-2">
           <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">STEP 2</div><h2 id="step-title-2">AI 분석 · 핀 저장</h2><p class="step-description">결과와 지도 핀을 확인하세요.</p></div><span id="step-2-label" class="lock-label">대기 중</span></div>
-           <div class="step-body"><div id="analysis-empty" class="answer-box"><span id="analysis-placeholder">민원을 저장하면 AI 분석과 핀이 나타납니다.</span><div id="analysis-loading" class="ai-loading" hidden role="status" aria-live="polite"><div class="ai-loading-mark" aria-hidden="true"></div><div class="ai-loading-copy"><strong>영암군 근거를 읽고 있습니다</strong><small>민원 유형·회의록·허가 기록·지도 영상을 함께 확인합니다.</small></div><div class="ai-loading-track" aria-hidden="true"><i></i></div></div></div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="back-to-intake" class="button ghost" type="button">이전: 민원 입력</button><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
+           <div class="step-body"><div id="analysis-empty" class="answer-box"><span id="analysis-placeholder">민원을 저장하면 AI 분석과 핀이 나타납니다.</span><div id="analysis-loading" class="ai-loading" hidden role="status" aria-live="polite"><div class="ai-loading-mark" aria-hidden="true"></div><div class="ai-loading-copy"><strong>영암군 근거를 읽고 있습니다</strong><small>민원 유형·회의록·허가 기록·지도 영상을 함께 확인합니다.</small></div><div class="ai-loading-track" aria-hidden="true"><i></i></div></div></div><div id="analysis-content" hidden><div class="result-grid analysis-summary" id="analysis-summary"></div><section class="analysis-brief" aria-labelledby="analysis-brief-title"><div class="analysis-brief-head"><h3 id="analysis-brief-title">한눈에 보는 판단</h3><span id="analysis-brief-count"></span></div><div id="analysis-reasons" class="analysis-reasons"></div></section><section class="analysis-next" aria-labelledby="analysis-next-title"><div class="analysis-section-head"><h3 id="analysis-next-title">지금 확인할 것</h3></div><div id="analysis-checks" class="analysis-checks"></div></section><details class="analysis-original"><summary>AI 설명 원문 보기</summary><div id="initial-answer" class="answer-box"></div></details><details class="analysis-evidence" open><summary>연결된 근거 <span id="analysis-evidence-count"></span></summary><div id="evidence-list" class="evidence-list"></div></details><p class="analysis-note">지도 영상은 주변 배치를 살펴보는 참고자료입니다. 거리·허가 여부는 공식 자료와 현장 확인이 필요합니다.</p><div class="actions"><button id="back-to-intake" class="button ghost" type="button">이전: 민원 입력</button><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
         </section>
 
         <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
@@ -689,14 +718,35 @@
       const source = context?.map_media || context || {}; const images = Array.isArray(source.images) ? source.images : [];
       return { provider: source.provider || 'VWorld', images: images.map((image) => ({ ...image, url: image.url || (image.cache_key ? `/v1/map-image/${image.cache_key}` : '') })).filter((image) => image.url).slice(0, 3) };
     }
+    function compactAnalysisReason(card) {
+      const evidence = Array.isArray(card?.evidence) ? card.evidence : []; const check = evidence.find((item) => item && item.status);
+      let title = String(card?.title || card?.category || '검토 항목').replace(/\(합성\)/g, '').trim(); let body = String(card?.statement || '').replace(/\s+/g, ' ').trim(); let status = check?.status || '';
+      if (check?.status === 'fail' && check.observed_value != null && check.threshold_value != null) body = `${check.observed_value}${check.unit || ''}로 기준 ${check.threshold_value}${check.unit || ''}에 미달합니다.`;
+      else { const match = body.match(/관련 기록\s*(\d+)건,\s*사건\s*(\d+)건/); if (match) body = `관련 기록 ${match[1]}건 · 사건 ${match[2]}건이 확인됐습니다.`; }
+      if (body.length > 138) body = `${body.slice(0, 136).trim()}…`;
+      const tag = status === 'fail' ? '기준 미충족' : status === 'check_required' ? '확인 필요' : card?.severity === 'high' ? '주의해서 확인' : '관련 기록';
+      return { title: title.length > 58 ? `${title.slice(0, 56).trim()}…` : title, body: body || '연결된 자료를 확인해 주세요.', status, tag, severity: card?.severity || 'medium' };
+    }
+    function renderAnalysisReasons(model) {
+      const cards = Array.isArray(model?.reason_cards) ? model.reason_cards : []; const visible = cards.slice(0, 4);
+      $('analysis-brief-count').textContent = cards.length ? `핵심 신호 ${cards.length}개 중 ${visible.length}개` : '연결된 신호 없음';
+      $('analysis-reasons').innerHTML = visible.length ? visible.map((card, index) => { const item = compactAnalysisReason(card); return `<article class="insight-card" data-status="${escapeHtml(item.status)}" data-severity="${escapeHtml(item.severity)}"><div class="insight-card-top"><span class="insight-number">${index + 1}</span><span class="insight-tag">${escapeHtml(item.tag)}</span></div><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.body)}</p></article>`; }).join('') : '<div class="evidence-item">입력값과 연결된 핵심 신호를 찾지 못했습니다.</div>';
+    }
+    function renderAnalysisChecks(model) {
+      const cards = Array.isArray(model?.reason_cards) ? model.reason_cards : []; const checks = [];
+      cards.forEach((card) => { const value = String(card?.next_check || '').replace(/\s+/g, ' ').trim(); if (value && !checks.includes(value)) checks.push(value); });
+      const items = checks.slice(0, 4); $('analysis-checks').innerHTML = items.length ? items.map((item) => `<div class="analysis-check">${escapeHtml(item)}</div>`).join('') : '<div class="analysis-check">공식 기준과 현장 조건을 담당자에게 확인하세요.</div>';
+    }
     function renderAnalysis(result) {
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
       currentComplaint = result.complaint; currentConversationId = result.conversation_id; currentMapContext = analysis.map_context || {}; currentInitialSlide = result.answer_slide || null;
       hideAnalysisLoading();
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
-      $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div>`;
+      $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">현재 판단</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">이 주소의 사전점검 결과</span></div><div class="result-card"><div class="mini-label">분석 위치</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div>`;
+      renderAnalysisReasons(model); renderAnalysisChecks(model);
       $('initial-answer').textContent = analysis.answer || 'AI 설명이 생성되지 않았습니다.';
-      $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => { const issues = (item.issues || []).map(issueLabel).filter(Boolean).join(' · '); const meta = [evidenceMatchLabel(item), item.date, issues].filter(Boolean).join(' · '); return `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span><small>${escapeHtml(meta)}</small></div>`; }).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
+      $('analysis-evidence-count').textContent = evidence.length ? ` · ${evidence.length}건 중 ${Math.min(3, evidence.length)}건 표시` : '';
+      $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 3).map((item) => { const issues = (item.issues || []).map(issueLabel).filter(Boolean).join(' · '); const meta = [evidenceMatchLabel(item), item.date, issues].filter(Boolean).join(' · '); return `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span><small>${escapeHtml(meta)}</small></div>`; }).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
       renderMapContext(analysis.map_context || {});
       $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
       chatMessages = [];
