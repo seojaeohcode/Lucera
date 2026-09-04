@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from lucera.db import LuceraDB
-from lucera.solverton_features import yeongam_f1, yeongam_f3, yeongam_f4
+from lucera.solverton_features import _grid_signal, yeongam_f1, yeongam_f3, yeongam_f4
 from lucera.synthetic import seed_synthetic
 
 
@@ -40,7 +40,11 @@ class SolvertonFeatureTests(unittest.TestCase):
         self.assertEqual(len(result["items"]), 11)
         self.assertTrue(all(row["eup_myeon"] for row in result["items"]))
         self.assertFalse(any("함평" in row["eup_myeon"] for row in result["items"]))
-        self.assertTrue(all(row["supply_data_present"] for row in result["items"]))
+        self.assertTrue(all("masked_substations" not in row for row in result["items"]))
+        self.assertTrue(all(row["signal"] in {"여유", "혼잡", "포화"} for row in result["items"]))
+        self.assertEqual(_grid_signal(59), ("여유", "low"))
+        self.assertEqual(_grid_signal(193), ("혼잡", "medium"))
+        self.assertEqual(_grid_signal(329), ("포화", "high"))
 
 
 if __name__ == "__main__":

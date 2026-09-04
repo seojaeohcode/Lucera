@@ -160,8 +160,23 @@ def yeongam_f3(db: Any) -> dict[str, Any]:
     }
 
 
+def _grid_signal(permit_count: int) -> tuple[str, str]:
+    """Translate the 읍면 permit volume into a plain-language review signal."""
+
+    if permit_count >= 200:
+        return "포화", "high"
+    if permit_count >= 100:
+        return "혼잡", "medium"
+    return "여유", "low"
+
+
 def yeongam_f4(db: Any) -> dict[str, Any]:
-    """Return the Yeongam subset of the masked KEPCO supply dataset."""
+    """Return a plain-language grid signal for each Yeongam 읍면.
+
+    The source only provides anonymized supply-area labels, so those labels
+    are intentionally not exposed.  The UI receives a review signal derived
+    from the public permit volume instead.
+    """
 
     permit_counts = {
         str(row["eup_myeon"]): int(row["count"])
@@ -174,24 +189,16 @@ def yeongam_f4(db: Any) -> dict[str, Any]:
         ).fetchall()
         if row["eup_myeon"]
     }
-    grouped_supply: dict[str, list[str]] = {}
-    for row in _grid_rows():
-        area = str(row.get("읍면동") or "")
-        if area not in YEONGAM_EUP_MYEON:
-            continue
-        supply = str(row.get("공급변전소(비식별)") or "").strip()
-        if supply and supply not in grouped_supply.setdefault(area, []):
-            grouped_supply[area].append(supply)
     items = []
     for area in YEONGAM_EUP_MYEON:
-        supplies = grouped_supply.get(area, [])
+        permit_count = permit_counts.get(area, 0)
+        signal, signal_level = _grid_signal(permit_count)
         items.append(
             {
                 "eup_myeon": area,
-                "masked_substations": " · ".join(supplies) if supplies else "자료 확인 필요",
-                "supply_data_present": bool(supplies),
-                "permit_register_count": permit_counts.get(area, 0),
-                "notice": "변전소 이름은 비식별 처리된 읍면 단위 자료입니다.",
+                "permit_register_count": permit_count,
+                "signal": signal,
+                "signal_level": signal_level,
             }
         )
     return {
@@ -203,7 +210,7 @@ def yeongam_f4(db: Any) -> dict[str, Any]:
         "data_origin": "solverton_reference_snapshot",
         "snapshot_date": "2026-09-03",
         "items": items,
-        "notice": "읍면별로 연결 가능한 공급 변전소 신호와 허가 건수를 함께 보여줍니다. 변전소 이름은 비식별 값이므로 실제 여유용량이나 정확한 위치를 뜻하지 않습니다.",
+        "notice": "변전소 이름 대신 읍면별 공개 허가 건수로 계통 부담 신호를 표시합니다. 여유 0~99건 · 혼잡 100~199건 · 포화 200건 이상입니다. 실제 접속 가능 여부와 여유 용량은 한전 확인이 필요합니다.",
     }
 
 
@@ -230,7 +237,7 @@ def feature_context_for_location(db: Any, eup_myeon: str | None, ri: str | None)
             for item in top_ri[:8]
         ],
         "f4_grid_signal": [
-            {key: item.get(key) for key in ("eup_myeon", "masked_substations", "permit_register_count")}
+            {key: item.get(key) for key in ("eup_myeon", "permit_register_count", "signal", "signal_level")}
             for item in matching_grid
         ],
         "scope": YEONGAM_COUNTY,

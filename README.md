@@ -45,7 +45,7 @@ CLIK_API_KEY=
 
 ## Solverton F 기능 API
 
-`GET /v1/features/f1`은 법제처 조례 스냅샷에서 영암군의 도로·주거 이격거리와 조문을 반환합니다. `GET /v1/features/f3`은 영암군 리별 누적 허가 건수·면적과 지도 좌표 표본을 반환하고, `GET /v1/features/f4`는 읍면 단위 비식별 한전 공급변전소 신호와 허가 건수를 반환합니다. 원본 파일은 `data/reference/solverton/`에 provenance와 함께 보관하며, 다른 시군 데이터는 API 응답에 노출하지 않습니다.
+`GET /v1/features/f1`은 법제처 조례 스냅샷에서 영암군의 도로·주거 이격거리와 조문을 반환합니다. `GET /v1/features/f3`은 영암군 리별 누적 허가 건수·면적과 지도 좌표 표본을 반환하고, `GET /v1/features/f4`는 변전소명을 노출하지 않고 읍면별 공개 허가 건수 기준의 계통 부담 신호(`여유`·`혼잡`·`포화`)를 반환합니다. 이 신호는 실제 접속 가능 용량을 판정하지 않으며, 최종 접속 여부는 한전 확인이 필요합니다. 원본 파일은 `data/reference/solverton/`에 provenance와 함께 보관하며, 다른 시군 데이터는 API 응답에 노출하지 않습니다.
 
 ## HTTP API
 
