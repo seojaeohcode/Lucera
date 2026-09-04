@@ -43,14 +43,17 @@
     h1 { max-width: 760px; margin-top: 14px; font-family: Georgia, "Noto Serif KR", serif; font-size: clamp(39px, 6vw, 73px); line-height: 1.04; letter-spacing: -.065em; font-weight: 800; }
     .hero-copy { max-width: 640px; margin-top: 18px; color: var(--ink-soft); font-size: 16px; }
     .journey-nav { display: flex; gap: 10px; overflow-x: auto; padding: 8px 0 28px; }
-    .journey-nav span { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 99px; background: rgba(255, 252, 246, .62); font-size: 12px; font-weight: 800; }
+    .journey-nav button { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; color: var(--ink-soft); border: 1px solid var(--line); border-radius: 99px; background: rgba(255, 252, 246, .62); font-size: 12px; font-weight: 800; }
     .journey-nav i { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--paper-deep); color: var(--ink); font-style: normal; }
-    .journey-nav span.current { border-color: var(--ink); color: var(--ink); background: var(--sun-pale); }
-    .journey-nav span.current i { background: var(--ink); color: #fff; }
-    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, .78fr); gap: 24px; align-items: start; padding-bottom: 70px; }
+    .journey-nav button.current { border-color: var(--ink); color: var(--ink); background: var(--sun-pale); }
+    .journey-nav button.current i { background: var(--ink); color: #fff; }
+    .journey-nav button:disabled { cursor: not-allowed; opacity: .52; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; padding-bottom: 70px; }
+    .workspace.page-map { grid-template-columns: minmax(0, 1fr) minmax(360px, .78fr); }
     .flow { display: grid; gap: 18px; }
     .step, .map-card { border: 1px solid var(--line); border-radius: 26px; background: var(--card); box-shadow: var(--shadow); backdrop-filter: blur(8px); }
-    .step { padding: 28px; position: relative; overflow: hidden; }
+    .step { display: none; min-height: min(680px, calc(100vh - 250px)); padding: 28px; position: relative; overflow: hidden; }
+    .step.is-view { display: block; }
     .step::after { content: ""; position: absolute; width: 130px; height: 130px; right: -54px; top: -58px; border-radius: 50%; background: var(--sun-pale); opacity: .6; pointer-events: none; }
     .step-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; position: relative; z-index: 1; }
     .step-index { display: inline-grid; place-items: center; width: 34px; height: 34px; margin-bottom: 14px; border-radius: 12px 12px 12px 4px; color: white; background: var(--ink); font-weight: 900; }
@@ -108,7 +111,8 @@
     .upload input { display: none; }
     .check { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); font-size: 11px; }
     .check input { width: auto; }
-    .map-sticky { position: sticky; top: 16px; display: grid; gap: 16px; }
+    .map-sticky { position: sticky; top: 16px; display: none; gap: 16px; }
+    .map-sticky.is-visible { display: grid; }
     .map-card { padding: 18px; background: #d9e8df; }
     .map-heading { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 14px; }
     .map-heading .eyebrow { color: var(--water-deep); }
@@ -117,7 +121,10 @@
     .map-counter { color: #fff; background: var(--water-deep); padding: 7px 10px; border-radius: 10px; font-size: 11px; font-weight: 900; }
     .map-canvas { position: relative; aspect-ratio: 1.1; overflow: hidden; border: 1px solid #a9c6bb; border-radius: 19px; background: #a6cbc0; }
     .map-canvas::before { content: ""; position: absolute; inset: 0; opacity: .55; background: repeating-linear-gradient(25deg, transparent 0 29px, rgba(255,255,255,.22) 30px 31px), repeating-linear-gradient(115deg, transparent 0 37px, rgba(63,128,118,.18) 38px 39px); }
-    .map-canvas::after { content: "영암군 · 합성/저장 핀"; position: absolute; left: 14px; top: 12px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.6); border-radius: 7px; color: #215a57; background: rgba(238, 250, 240, .76); font-size: 10px; font-weight: 900; letter-spacing: .05em; }
+    .map-canvas::after { content: "영암군 · 읍·면 지도"; position: absolute; left: 14px; top: 12px; padding: 5px 8px; border: 1px solid rgba(255,255,255,.6); border-radius: 7px; color: #215a57; background: rgba(238, 250, 240, .76); font-size: 10px; font-weight: 900; letter-spacing: .05em; }
+    .map-image { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; opacity: .78; mix-blend-mode: multiply; }
+    .map-canvas.has-imagery::before { opacity: .18; }
+    .map-canvas.has-imagery::after { content: "영암군 · VWorld 지도 영상"; color: #fff; background: rgba(23, 61, 54, .76); }
     .map-river { position: absolute; inset: 20% -10% 10% 50%; border: 20px solid rgba(255,255,255,.32); border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(-18deg); }
     .map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(30, 93, 84, .12) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 93, 84, .12) 1px, transparent 1px); background-size: 20% 20%; }
     .map-pin { position: absolute; z-index: 3; width: 25px; height: 25px; padding: 0; border: 3px solid #fff9ed; border-radius: 50% 50% 50% 5px; transform: translate(-50%, -100%) rotate(-45deg); box-shadow: 0 4px 10px rgba(23,61,54,.28); }
@@ -131,6 +138,9 @@
     .map-area-label.active { color: #fff; border-color: var(--ink); background: var(--ink); }
     .map-key { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 11px; color: #45685f; font-size: 11px; font-weight: 800; }
     .map-key span { display: inline-flex; gap: 6px; align-items: center; }
+    .map-video-status { margin-top: 9px; padding: 8px 10px; border: 1px dashed #a9c6bb; border-radius: 10px; color: #45685f; background: rgba(255, 252, 246, .62); font-size: 10px; }
+    .map-video-status.ready { color: #fff; border-style: solid; border-color: var(--water-deep); background: var(--water-deep); }
+    .runtime-status { margin-top: 14px; color: var(--ink-soft); font-size: 11px; }
     .area-picker { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
     .area-button { border: 1px solid #a9c6bb; border-radius: 99px; padding: 7px 10px; color: #315f57; background: rgba(255, 252, 246, .72); font-size: 11px; font-weight: 900; }
     .area-button:hover, .area-button:focus { border-color: var(--ink); outline: none; }
@@ -165,7 +175,7 @@
 <body>
   <header class="shell topbar">
     <div class="brand"><span class="brand-mark">L</span><span>Lucera / 영암 민원</span></div>
-    <div class="scope-badge">영암군 전용 베타</div>
+    <div id="runtime-badge" class="scope-badge">영암군 전용 베타 · 상태 확인 중</div>
   </header>
 
   <main class="shell">
@@ -173,19 +183,20 @@
       <div>
         <div class="eyebrow">영암군 민원 사전점검</div>
         <h1 id="page-title">민원 입력 → AI 분석 → 챗봇</h1>
-        <p class="hero-copy">주소와 민원을 입력하면 분석 결과와 지도 핀을 저장합니다.</p>
+        <p class="hero-copy">민원 입력, 분석·지도, 근거 기반 챗봇을 각각 한 화면에서 진행합니다.</p>
+        <div id="runtime-status" class="runtime-status" role="status" aria-live="polite"></div>
       </div>
     </section>
 
     <nav class="journey-nav" aria-label="사용자 흐름">
-      <span id="nav-1" class="current"><i>1</i> 민원 입력</span>
-      <span id="nav-2"><i>2</i> AI 분석 · 핀</span>
-      <span id="nav-3"><i>3</i> 주소 · 챗봇</span>
+      <button id="nav-1" class="current" type="button" data-step="1"><i>1</i> 민원 입력</button>
+      <button id="nav-2" type="button" data-step="2" disabled><i>2</i> AI 분석 · 핀</button>
+      <button id="nav-3" type="button" data-step="3" disabled><i>3</i> 주소 · 챗봇</button>
     </nav>
 
     <section class="workspace">
       <div class="flow">
-        <section id="step-1" class="step is-active" aria-labelledby="step-title-1">
+        <section id="step-1" class="step is-active is-view" aria-labelledby="step-title-1">
           <div class="step-header">
             <div><span class="step-index">1</span><div class="step-kicker">STEP 1</div><h2 id="step-title-1">민원 입력</h2><p class="step-description">주소와 상황을 입력하세요.</p></div>
             <span class="lock-label">지금 입력</span>
@@ -205,21 +216,22 @@
 
         <section id="step-2" class="step is-locked" aria-labelledby="step-title-2">
           <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">STEP 2</div><h2 id="step-title-2">AI 분석 · 핀 저장</h2><p class="step-description">결과와 지도 핀을 확인하세요.</p></div><span id="step-2-label" class="lock-label">대기 중</span></div>
-          <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 저장하면 AI 분석과 핀이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
+          <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 저장하면 AI 분석과 핀이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div id="map-video-status" class="map-video-status" role="status" aria-live="polite">지도 영상 자동 포함 상태를 확인하는 중입니다.</div><div class="actions"><button id="back-to-intake" class="button ghost" type="button">이전: 민원 입력</button><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
         </section>
 
         <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
           <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">STEP 3</div><h2 id="step-title-3">주소 입력 · 챗봇</h2><p class="step-description">같은 근거로 계속 질문하세요.</p></div><span id="step-3-label" class="lock-label">대기 중</span></div>
-          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>근거 기반 대화</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="추가 질문을 입력하세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><label class="check"><input id="include-map" type="checkbox"> 지도 영상 포함</label><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
+          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="back-to-analysis" class="button ghost" type="button">이전: 분석·지도</button><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span>근거 기반 대화</span></div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="추가 질문을 입력하세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><span class="helper">지도 영상 자동 포함</span><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
         </section>
       </div>
 
-      <aside class="map-sticky">
+      <aside id="map-sticky" class="map-sticky">
         <section class="map-card" aria-labelledby="map-title">
           <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
           <p class="map-description">핀 또는 지도 안 읍·면 이름을 누르면 지역 기록과 상세가 열립니다.</p>
-          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 지도"><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
+          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 참고 사업</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
+          <div id="map-video-note" class="map-video-status">지도 영상은 분석·챗봇 요청에 자동 포함됩니다.</div>
           <div id="area-picker" class="area-picker" aria-label="영암 읍면 선택"></div>
           <div id="area-detail" class="area-detail">읍·면 버튼을 누르면 핀과 지역 요약이 바뀝니다.</div>
           <div id="pin-detail" class="pin-detail">핀을 선택하면 주소와 데이터 출처를 확인할 수 있습니다.</div>
@@ -236,6 +248,7 @@
     let pins = [];
     let mapAreas = [];
     let activeArea = '영암군 전체';
+    let chatStepReady = false;
     const $ = (id) => document.getElementById(id);
     const jsonHeaders = { 'Content-Type': 'application/json' };
 
@@ -250,8 +263,11 @@
     function setStep(step) {
       for (let index = 1; index <= 3; index++) {
         const stepNode = $(`step-${index}`); const navNode = $(`nav-${index}`);
-        stepNode.classList.toggle('is-active', index <= step); stepNode.classList.toggle('is-locked', index > step); navNode.classList.toggle('current', index === step);
+        stepNode.classList.toggle('is-view', index === step); stepNode.classList.toggle('is-active', index === step); stepNode.classList.toggle('is-locked', index > step); navNode.classList.toggle('current', index === step);
+        navNode.disabled = index === 2 ? !currentComplaint : index === 3 ? !chatStepReady : false;
       }
+      document.querySelector('.workspace').classList.toggle('page-map', step === 2);
+      $('map-sticky').classList.toggle('is-visible', step === 2);
     }
     function numberOrNull(id) { const value = $(id).value.trim(); return value ? Number(value) : null; }
     function fillExample() {
@@ -259,6 +275,26 @@
       $('complaint-text').value = '집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.';
       $('complaint-lat').value = '34.800000'; $('complaint-lon').value = '126.420000';
       setStatus('complaint-status', '영암군 삼호읍 합성 예시를 채웠습니다.', 'success');
+    }
+    async function loadRuntimeStatus() {
+      try {
+        const status = await api('/v1/runtime/status'); const answer = status.answer || {}; const map = status.map || {};
+        const answerLabel = answer.mode === 'claude_api' ? 'Claude API 사용 가능' : 'Claude API 미설정 · 로컬 fallback';
+        const mapLabel = map.configured ? 'VWorld 지도 영상 연결 가능' : 'VWorld 키 대기';
+        $('runtime-badge').textContent = `영암군 전용 · ${answerLabel}`;
+        $('runtime-status').textContent = `AI ${answerLabel} · 지도 영상 ${mapLabel}`;
+      } catch (error) {
+        $('runtime-badge').textContent = '영암군 전용 베타'; $('runtime-status').textContent = '실행 상태를 확인하지 못했습니다.';
+      }
+    }
+    function renderMapContext(context) {
+      const images = Array.isArray(context?.images) ? context.images : []; const image = $('map-image'); const canvas = $('map-canvas'); const note = $('map-video-note');
+      if (images.length && images[0].url) {
+        image.src = images[0].url; image.hidden = false; canvas.classList.add('has-imagery'); note.className = 'map-video-status ready'; note.textContent = `VWorld 지도 영상 ${images.length}장 자동 포함 · 이미지도 같은 분석에 전달됨`;
+        return;
+      }
+      image.removeAttribute('src'); image.hidden = true; canvas.classList.remove('has-imagery'); note.className = 'map-video-status';
+      note.textContent = context?.reason === 'vworld_key_missing' ? '지도 영상 자동 포함 요청됨 · VWorld 키 설정 후 영상이 표시됩니다.' : '지도 영상 자동 포함 요청됨 · 현재는 핀·읍면 UI를 표시합니다.';
     }
     function percent(value, min, max) { return Math.max(5, Math.min(95, ((value - min) / (max - min)) * 100)); }
     function renderPins(data) {
@@ -318,9 +354,11 @@
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
       currentComplaint = result.complaint; currentConversationId = result.conversation_id;
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
-      $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div>`;
+      const generation = (result.answer_generation || {}); const generationLabel = generation.mode === 'claude' ? `Claude · ${generation.model || 'API'}` : '로컬 안전 fallback';
+      $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div><div class="result-card"><div class="mini-label">ANSWER ENGINE</div><strong>${escapeHtml(generationLabel)}</strong><span class="helper">지도 영상 자동 포함</span></div>`;
       $('initial-answer').textContent = analysis.answer || 'AI 설명이 생성되지 않았습니다.';
       $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span></div>`).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
+      renderMapContext(result.map_context || {});
       $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
       setStep(2); $('step-2').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -332,17 +370,26 @@
       event.preventDefault(); setStatus('complaint-status', '주소 좌표를 확인하고 영암 근거를 연결하는 중입니다…');
       const lat = numberOrNull('complaint-lat'), lon = numberOrNull('complaint-lon');
       try {
-        const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, latitude: lat, longitude: lon, resolve_address: lat === null || lon === null, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: false }) });
+        const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, latitude: lat, longitude: lon, resolve_address: lat === null || lon === null, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: true }) });
         renderAnalysis(result); await loadPins(); showPin({ title: result.complaint.title, address: result.complaint.normalized_address, data_origin: 'user_input', issues: result.complaint.issue_codes }); setStatus('complaint-status', '저장 완료. 아래 2단계에서 AI 설명과 연결 근거를 확인하세요.', 'success');
       } catch (error) { setStatus('complaint-status', error.message, 'error'); }
     });
+    function openChatStep() {
+      if (!currentComplaint) return;
+      chatStepReady = true; $('chat-locked').hidden = true;
+      if ($('chat-content').hidden) { $('chat-address-panel').hidden = false; $('chat-address').value = currentComplaint.normalized_address || $('complaint-address').value; $('step-3-label').textContent = '주소 확인 대기'; }
+      setStep(3); $('step-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if ($('chat-content').hidden) $('chat-address').focus();
+    }
     $('fill-example').addEventListener('click', fillExample); $('reload-pins').addEventListener('click', loadPins);
-    $('next-button').addEventListener('click', () => { $('chat-locked').hidden = true; $('chat-address-panel').hidden = false; $('chat-address').value = currentComplaint.normalized_address || $('complaint-address').value; $('step-3').classList.add('is-active'); $('step-3').classList.remove('is-locked'); $('step-3-label').textContent = '주소 확인 대기'; setStep(3); $('step-3').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('chat-address').focus(); });
+    $('next-button').addEventListener('click', openChatStep);
+    $('back-to-intake').addEventListener('click', () => setStep(1)); $('back-to-analysis').addEventListener('click', () => setStep(2));
+    document.querySelectorAll('.journey-nav button').forEach((button) => button.addEventListener('click', () => setStep(Number(button.dataset.step))));
     $('address-confirm').addEventListener('click', () => { const address = $('chat-address').value.trim(); if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error'); $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address; renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]); $('chat-message').focus(); setStatus('address-status', '주소가 저장된 민원·근거와 연결되었습니다.', 'success'); });
     $('chat-image').addEventListener('change', () => { const file = $('chat-image').files[0]; $('image-name').textContent = file ? `${file.name} 선택됨` : '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; });
     function readImage(file) { return new Promise((resolve, reject) => { if (!file) return resolve(null); if (file.size > 1.5 * 1024 * 1024) return reject(new Error('이미지는 1.5MB 이하만 첨부할 수 있습니다.')); const reader = new FileReader(); reader.onload = () => { const value = String(reader.result || ''); resolve({ media_type: file.type, data: value.split(',')[1] || '' }); }; reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.readAsDataURL(file); }); }
-    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); setStatus('chat-status', '저장된 영암 근거를 다시 조회해 답변하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: $('chat-message').value, image, include_map_context: $('include-map').checked }) }); renderMessages(result.messages); $('chat-message').value = ''; $('chat-image').value = ''; $('image-name').textContent = '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; setStatus('chat-status', '같은 대화에 답변을 저장했습니다.', 'success'); } catch (error) { setStatus('chat-status', error.message, 'error'); } });
-    loadPins();
+    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); setStatus('chat-status', '저장된 영암 근거와 지도 영상을 다시 조회해 답변하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: $('chat-message').value, image, include_map_context: true }) }); renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); $('chat-message').value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '같은 대화에 답변을 저장했습니다.', 'success'); } catch (error) { setStatus('chat-status', error.message, 'error'); } });
+    setStep(1); loadRuntimeStatus(); loadPins();
   </script>
 </body>
 </html>

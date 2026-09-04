@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -9,6 +10,7 @@ from urllib.parse import unquote, urlparse
 
 import config
 
+from .answer import resolve_api_key
 from .db import LuceraDB
 from .complaints import continue_conversation, create_complaint, get_conversation, yeongam_area_detail, yeongam_pins
 from .ingest import ingest_clik
@@ -17,9 +19,42 @@ from .regions import parent_region_catalog, region_catalog
 from .regional_collect import collect_regional
 from .rag import RAGService
 from .search import SearchService
+from .vworld import VWorldClient
 
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+
+
+def runtime_status() -> dict[str, Any]:
+    """Expose provider configuration without exposing any credential value."""
+
+    claude_configured = bool(resolve_api_key())
+    force_local = os.getenv("LUCERA_ANSWER_MODE", "").lower() == "local"
+    vworld_configured = VWorldClient().enabled
+    return {
+        "scope": "yeongam",
+        "answer": {
+            "provider": "Claude API",
+            "configured": claude_configured,
+            "mode": "local" if force_local else ("claude_api" if claude_configured else "local_fallback"),
+            "notice": (
+                "Claude API 키가 설정되어 호출 시 사용됩니다."
+                if claude_configured and not force_local
+                else "Claude API 키가 없어 결정론적 로컬 분석으로 동작합니다."
+            ),
+        },
+        "map": {
+            "provider": "VWorld",
+            "required": True,
+            "configured": vworld_configured,
+            "mode": "aerial_imagery" if vworld_configured else "imagery_pending_key",
+            "notice": (
+                "민원 분석과 챗봇 요청에 지도 영상을 자동 포함합니다."
+                if vworld_configured
+                else "지도 영상 자동 포함을 요청하지만 VWorld 키가 없어 영상 연결 대기 상태입니다."
+            ),
+        },
+    }
 
 
 class LuceraHandler(BaseHTTPRequestHandler):
@@ -50,6 +85,9 @@ class LuceraHandler(BaseHTTPRequestHandler):
         if path == "/health":
             with self.db.lock:
                 self._json({"status": "ok", "service": "lucera", **self.db.stats()})
+            return
+        if path == "/v1/runtime/status":
+            self._json(runtime_status())
             return
         if path == "/v1/stats":
             with self.db.lock:

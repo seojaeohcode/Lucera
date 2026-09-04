@@ -6,6 +6,7 @@ from pathlib import Path
 
 from lucera.complaints import continue_conversation, create_complaint, get_conversation, yeongam_area_detail, yeongam_pins
 from lucera.db import LuceraDB
+from lucera.server import runtime_status
 from lucera.synthetic import seed_synthetic
 
 
@@ -49,6 +50,7 @@ class YeongamFlowTests(unittest.TestCase):
         )
         self.assertEqual((result["complaint"]["latitude"], result["complaint"]["longitude"]), (34.8, 126.42))
         self.assertEqual(result["complaint"]["city_county"], "영암군")
+        self.assertTrue(result["analysis"]["input"]["include_map_context"])
         self.assertGreaterEqual(result["evidence_links"], 1)
         conversation = get_conversation(self.db, result["conversation_id"])
         self.assertEqual([item["role"] for item in conversation["messages"]], ["user", "assistant"])
@@ -82,3 +84,10 @@ class YeongamFlowTests(unittest.TestCase):
                 self.db,
                 {"address": "전라남도 함평군 손불면 가상리 1-1", "text": "다른 지역 민원입니다.", "latitude": 35.1, "longitude": 126.52},
             )
+
+    def test_runtime_status_reports_provider_state_without_credentials(self) -> None:
+        status = runtime_status()
+        self.assertEqual(status["scope"], "yeongam")
+        self.assertEqual(status["answer"]["provider"], "Claude API")
+        self.assertTrue(status["map"]["required"])
+        self.assertNotIn("api_key", str(status).lower())

@@ -103,7 +103,9 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
     rag_payload["resolve_address"] = bool(payload.get("resolve_address", True))
     rag_payload.setdefault("review_mode", "all")
     rag_payload.setdefault("include_comparative", False)
-    rag_payload.setdefault("include_map_context", False)
+    # 지도 영상은 민원 분석과 챗봇 모두에서 기본 포함한다. VWorld 키가
+    # 없으면 RAG 응답에 그 상태를 남기고 로컬 분석으로 안전하게 강등된다.
+    rag_payload["include_map_context"] = True
     if image:
         rag_payload["image"] = image
     result = RAGService(db).analyze(rag_payload)
@@ -206,6 +208,7 @@ def continue_conversation(db: LuceraDB, conversation_id: str, payload: dict[str,
         "resolve_address": bool(payload.get("resolve_address", address_changed)),
         "scope": "yeongam",
         "include_comparative": False,
+        "include_map_context": True,
     }
     if image:
         rag_payload["image"] = image
