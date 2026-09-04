@@ -91,8 +91,25 @@
     .intake-assist-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; align-items: center; }
     .intake-assist-row input { height: 43px; padding: 10px 12px; border-color: #bdd7c5; border-radius: 10px; font-size: 12px; }
     .intake-assist .button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 43px; padding: 9px 13px; color: #fff; background: linear-gradient(110deg, var(--brand-bright), var(--brand)); box-shadow: none; font-size: 11px; white-space: nowrap; }
-    .intake-assist .button:hover { box-shadow: 0 5px 13px rgba(0, 85, 43, .2); }
-    .assist-credit { display: inline-flex; align-items: center; gap: 3px; padding: 2px 5px; border-radius: 99px; color: #6d4d00; background: rgba(255, 239, 177, .92); font-size: 10px; }
+     .intake-assist .button:hover { box-shadow: 0 5px 13px rgba(0, 85, 43, .2); }
+     .assist-credit { display: inline-flex; align-items: center; gap: 3px; padding: 2px 5px; border-radius: 99px; color: #6d4d00; background: rgba(255, 239, 177, .92); font-size: 10px; }
+     .case-picker { margin-bottom: 22px; padding: 15px; border: 1px solid #c4e0cc; border-radius: 16px; background: linear-gradient(135deg, #f0faf3 0%, #fff9e8 100%); }
+     .case-picker-head { display: flex; justify-content: space-between; gap: 12px; align-items: end; margin-bottom: 11px; }
+     .case-picker-head strong { display: block; color: var(--brand); font-size: 13px; }
+     .case-picker-head small { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 10px; }
+     .case-picker-head em { color: #9a7000; font-size: 10px; font-style: normal; font-weight: 800; white-space: nowrap; }
+     .case-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+     .case-card { min-height: 88px; padding: 10px 9px; border: 1px solid #cfe2d4; border-radius: 12px; color: var(--ink-soft); background: rgba(255,255,255,.72); text-align: left; transition: border-color .18s, background .18s, transform .18s; }
+     .case-card:hover, .case-card:focus-visible { border-color: var(--brand-bright); background: #fff; transform: translateY(-2px); outline: none; }
+     .case-card.active { border-color: var(--sun-deep); background: #fff8dd; box-shadow: inset 0 0 0 1px rgba(230,161,0,.18); }
+     .case-card b, .case-card strong, .case-card small { display: block; }
+     .case-card b { color: var(--brand-bright); font-size: 10px; }
+     .case-card strong { margin-top: 5px; color: var(--ink); font-size: 11px; line-height: 1.35; letter-spacing: -.04em; }
+     .case-card small { margin-top: 7px; color: #879b8e; font-size: 9px; line-height: 1.35; }
+     .selected-address { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin: 13px 0 15px; padding: 11px 13px; border: 1px solid #d5e3da; border-radius: 11px; color: var(--ink); background: #fff; }
+     .selected-address span { color: #6e9b7e; font-size: 10px; font-weight: 900; white-space: nowrap; }
+     .selected-address strong { font-size: 12px; font-weight: 700; text-align: right; }
+     .case-title-line { margin-bottom: 7px; color: var(--ink-soft); font-size: 11px; font-weight: 800; }
     .field-label-row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
     .field-hint { color: #6e9b7e; font-size: 10px; font-weight: 700; }
     #complaint-form > .actions { justify-content: flex-end; margin: 22px -28px 0; padding: 19px 28px 22px; border-top: 1px solid #edf3ee; background: #fbfdfb; }
@@ -206,7 +223,8 @@
     .footnote { padding: 17px 0 38px; border-top: 1px solid var(--line); color: #7a7065; font-size: 11px; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @media (max-width: 920px) { .hero, .workspace, .workspace.page-map { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
-    @media (max-width: 560px) { .shell { width: min(100% - 24px, 1240px); } .hero { padding-top: 35px; } .step { padding: 21px; border-radius: 20px; } .form-grid, .result-grid, .details-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } #step-1 .step-header { padding: 21px 21px 18px; } #step-1 .step-body { padding: 18px 21px 0; } #step-1 .intake-assist-row { grid-template-columns: 1fr; } #complaint-form > .actions { margin-left: -21px; margin-right: -21px; padding-left: 21px; padding-right: 21px; } .intake-assist .button { width: 100%; } h1 { font-size: 43px; } }
+     @media (max-width: 760px) { .case-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .case-card:last-child { grid-column: 1 / -1; } }
+     @media (max-width: 560px) { .shell { width: min(100% - 24px, 1240px); } .hero { padding-top: 35px; } .step { padding: 21px; border-radius: 20px; } .form-grid, .result-grid, .details-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } #step-1 .step-header { padding: 21px 21px 18px; } #step-1 .step-body { padding: 18px 21px 0; } #step-1 .intake-assist-row { grid-template-columns: 1fr; } #complaint-form > .actions { margin-left: -21px; margin-right: -21px; padding-left: 21px; padding-right: 21px; } .intake-assist .button { width: 100%; } h1 { font-size: 43px; } .selected-address { align-items: start; flex-direction: column; } .selected-address strong { text-align: left; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
 
     /* Lucera brand refresh: bright, airy and map-led */
@@ -364,13 +382,12 @@
             <span class="lock-label">1 / 3</span>
           </div>
           <div class="step-body">
-            <div class="intake-assist"><div class="intake-assist-main"><span class="intake-assist-icon">✦</span><div><strong>AI로 예시 민원 자동 생성 <span>(샘플을 추천해드려요!)</span></strong><small>영암군에서 자주 확인하는 상황을 빠르게 불러옵니다.</small></div></div><div class="intake-assist-row"><input id="example-prompt" aria-label="예시 민원 주제" value="집중호우·배수로 관련 민원"><button class="button" type="button" id="fill-example">예시 채우기 <span class="assist-credit">✦ 1</span></button></div></div>
+            <div class="case-picker"><div class="case-picker-head"><div><strong>영암군 민원 사례 선택</strong><small>5개 유형 중 하나를 고르면 주소와 실제형 민원이 함께 채워집니다.</small></div><em>AI 자동 분류</em></div><div id="case-list" class="case-list" role="listbox" aria-label="영암군 민원 사례"><div class="helper">사례를 불러오는 중입니다.</div></div></div>
             <form id="complaint-form">
               <div class="form-grid">
-                <div class="field full"><div class="field-label-row"><label for="complaint-address">주소</label><span class="field-hint">영암군만 지원</span></div><input id="complaint-address" required value="전라남도 영암군 도포면 영호리 572-5" placeholder="영암군 주소"></div>
-                <div class="field full"><div class="field-label-row"><label for="complaint-text">민원 내용</label><span class="field-hint">상황과 궁금한 점을 자유롭게 입력</span></div><textarea id="complaint-text" required>집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.</textarea></div>
+                <div class="field full"><div class="field-label-row"><label>선택한 주소</label><span class="field-hint">도로명주소 · 영암군만 지원</span></div><div id="selected-address" class="selected-address"><span>주소</span><strong>사례를 선택해 주세요.</strong></div><input id="complaint-address" type="hidden" required value=""></div>
+                <div class="field full"><div class="field-label-row"><label for="complaint-text">민원 내용</label><span class="field-hint">선택한 사례를 필요하면 수정할 수 있습니다.</span></div><div id="selected-case-title" class="case-title-line">사례를 선택하면 민원 내용이 입력됩니다.</div><textarea id="complaint-text" required placeholder="위 사례를 선택해 주세요."></textarea></div>
               </div>
-              <details><summary>테스트 좌표(선택)</summary><div class="details-grid"><div class="field"><label for="complaint-lat">위도</label><input id="complaint-lat" type="number" step="0.000001" value=""></div><div class="field"><label for="complaint-lon">경도</label><input id="complaint-lon" type="number" step="0.000001" value=""></div></div></details>
               <div class="actions"><button class="button" type="submit">저장하고 분석하기</button></div>
               <div id="complaint-status" class="status" role="status" aria-live="polite"></div>
             </form>
@@ -418,6 +435,8 @@
     let pins = [];
     let mapAreas = [];
     let mapRiAreas = [];
+    let caseExamples = [];
+    let selectedCase = null;
     let activeArea = '영암군 전체';
     let activeRiKey = '';
     let activeFeature = 'f1';
@@ -444,12 +463,34 @@
       $('map-sticky').classList.toggle('is-visible', step === 2);
     }
     function numberOrNull(id) { const value = $(id).value.trim(); return value ? Number(value) : null; }
-    function startIntake() { $('flow-start').scrollIntoView({ behavior: 'smooth', block: 'start' }); window.setTimeout(() => $('complaint-address').focus(), 450); }
-    function fillExample() {
-      $('complaint-address').value = '전라남도 영암군 도포면 영호리 572-5';
-      $('complaint-text').value = '집중호우 때 배수로가 넘치고 토사가 유출될까 걱정됩니다. 주민 설명회와 현장 점검 계획을 알려주세요.';
-      $('complaint-lat').value = ''; $('complaint-lon').value = '';
-      setStatus('complaint-status', '영암군 공개 원장 주소 예시를 채웠습니다.', 'success');
+    function startIntake() { $('flow-start').scrollIntoView({ behavior: 'smooth', block: 'start' }); window.setTimeout(() => $('case-list button')?.focus(), 450); }
+    const fallbackCases = [
+      { id: 'regulatory', label: '규제·인허가', share: '48.1%', summary: '이격거리·조례·허가기준을 확인하는 사례', address: '전라남도 영암군 영암읍 군청로 1', title: '주거지와 도로 이격거리 기준이 맞는지 확인해 주세요', text: '영암읍 군청로 인근에 태양광 발전시설 설치를 검토하고 있습니다. 예정 부지가 주거지와 주요도로에서 각각 300m 기준을 충족하는지, 영암군 조례상 개발행위와 인허가 절차에 문제가 없는지 확인해 주세요.' },
+      { id: 'environment', label: '입지·환경 훼손', share: '43.5%', summary: '배수·경관·농지 영향을 살펴보는 사례', address: '전라남도 영암군 군서면 왕인로 440', title: '집중호우와 경관·농지 훼손이 걱정됩니다', text: '군서면 왕인로 인근 농지에 태양광 시설이 들어오면 산비탈의 배수로가 막히거나 집중호우 때 토사가 마을 쪽으로 흘러내릴까 걱정됩니다. 월출산 조망과 농지 훼손 가능성까지 함께 검토하고 보완해야 할 사항을 알려주세요.' },
+      { id: 'community', label: '절차·주민수용성', share: '33.3%', summary: '주민 고지·설명회·협의 절차를 확인하는 사례', address: '전라남도 영암군 삼호읍 대불주거1로 12', title: '주민 설명회와 사전 고지가 제대로 이뤄졌나요?', text: '삼호읍 대불주거1로 인근 주민입니다. 태양광 사업 계획을 뒤늦게 알게 되었고, 마을 주민 설명회나 의견 수렴이 있었는지 확인하기 어렵습니다. 사업자가 어떤 절차로 주민에게 알리고 의견을 반영해야 하는지, 회의록에 확인되는 유사 사례도 알려주세요.' },
+      { id: 'trust', label: '이익배분·사업 신뢰', share: '27.8%', summary: '주민참여·보상·사업자 약속을 확인하는 사례', address: '전라남도 영암군 학산면 독천로 193', title: '주민참여와 수익 배분 약속을 확인하고 싶습니다', text: '학산면 독천로 인근 태양광 사업에서 주민에게 수익 일부를 나누거나 마을기금을 지원한다는 설명을 들었습니다. 실제 협약이나 주민참여 방식이 있었는지, 사업자가 약속한 차폐·배수 보완을 이행했는지 회의록과 허가 자료를 바탕으로 확인해 주세요.' },
+      { id: 'grid', label: '계통·송전', share: '17.6%', summary: '접속 가능성·송전선로·변전 설비를 확인하는 사례', address: '전라남도 영암군 신북면 예향로 2346', title: '계통 접속과 송전선로 계획을 확인해 주세요', text: '신북면 예향로 인근에 태양광 발전시설을 검토 중인데, 인근 변전소의 여유 용량과 계통 접속 가능 여부를 알기 어렵습니다. 송전선로가 추가로 설치되는지, 주변 사업의 접속 지연이나 보완 요청 사례가 있었는지 확인해 주세요.' },
+    ];
+    function renderCaseList() {
+      const node = $('case-list');
+      node.innerHTML = caseExamples.map((item) => `<button type="button" class="case-card ${selectedCase?.id === item.id ? 'active' : ''}" data-case-id="${escapeHtml(item.id)}" role="option" aria-selected="${selectedCase?.id === item.id}"><b>${escapeHtml(item.label)} · ${escapeHtml(item.share)}</b><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.address)}</small></button>`).join('');
+      node.querySelectorAll('[data-case-id]').forEach((button) => button.addEventListener('click', () => selectCase(button.dataset.caseId)));
+    }
+    function selectCase(caseId) {
+      const item = caseExamples.find((candidate) => candidate.id === caseId);
+      if (!item) return;
+      selectedCase = item;
+      $('complaint-address').value = item.address;
+      $('selected-address').innerHTML = `<span>도로명주소</span><strong>${escapeHtml(item.address)}</strong>`;
+      $('selected-case-title').textContent = item.title;
+      $('complaint-text').value = item.text;
+      renderCaseList();
+      setStatus('complaint-status', `${item.label} 사례를 선택했습니다. 주소는 제출할 때 자동으로 좌표 변환됩니다.`, 'success');
+    }
+    async function loadCaseCatalog() {
+      try { const response = await api('/v1/cases'); caseExamples = response.cases || []; } catch (error) { caseExamples = fallbackCases; }
+      renderCaseList();
+      if (caseExamples.length) selectCase(caseExamples[0].id);
     }
     async function loadRuntimeStatus() {
       try {
@@ -630,9 +671,9 @@
     }
     $('complaint-form').addEventListener('submit', async (event) => {
       event.preventDefault(); setStatus('complaint-status', '주소 좌표를 확인하고 영암 근거를 연결하는 중입니다…');
-      const lat = numberOrNull('complaint-lat'), lon = numberOrNull('complaint-lon');
+      if (!selectedCase || !$('complaint-address').value) { setStatus('complaint-status', '먼저 민원 사례를 선택해 주세요.', 'error'); return; }
       try {
-        const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, latitude: lat, longitude: lon, resolve_address: lat === null || lon === null, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: true }) });
+        const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, title: selectedCase.title, case_type: selectedCase.id, resolve_address: true, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: true }) });
         renderAnalysis(result); await loadPins(); showPin({ title: result.complaint.title, address: result.complaint.normalized_address, data_origin: 'user_input', issues: result.complaint.issue_codes }); setStatus('complaint-status', '저장 완료. 아래 2단계에서 AI 설명과 연결 근거를 확인하세요.', 'success');
       } catch (error) { setStatus('complaint-status', error.message, 'error'); }
     });
@@ -643,7 +684,7 @@
       setStep(3); $('step-3').scrollIntoView({ behavior: 'smooth', block: 'center' });
       if ($('chat-content').hidden) $('chat-address').focus();
     }
-    $('fill-example').addEventListener('click', fillExample); $('reload-pins').addEventListener('click', loadPins); $('hero-start').addEventListener('click', startIntake); $('topbar-start').addEventListener('click', startIntake); document.querySelectorAll('[data-feature]').forEach((button) => button.addEventListener('click', () => loadFeature(button.dataset.feature)));
+    $('reload-pins').addEventListener('click', loadPins); $('hero-start').addEventListener('click', startIntake); $('topbar-start').addEventListener('click', startIntake); document.querySelectorAll('[data-feature]').forEach((button) => button.addEventListener('click', () => loadFeature(button.dataset.feature)));
     $('next-button').addEventListener('click', openChatStep);
     $('back-to-intake').addEventListener('click', () => setStep(1)); $('back-to-analysis').addEventListener('click', () => setStep(2));
     document.querySelectorAll('.journey-nav button').forEach((button) => button.addEventListener('click', () => setStep(Number(button.dataset.step))));
@@ -653,7 +694,7 @@
     $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); const input = $('chat-message'); const messageText = input.value.trim(); if (!messageText) return; const submit = $('chat-form button[type="submit"]'); submit.disabled = true; chatMessages = [...chatMessages, { role: 'user', content: messageText }]; renderMessages(chatMessages); appendTyping(); setStatus('chat-status', '영암 근거와 지도 영상을 함께 다시 확인하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: messageText, image, include_map_context: true }) }); renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success'); } catch (error) { document.getElementById('chat-typing')?.remove(); setStatus('chat-status', error.message, 'error'); } finally { submit.disabled = false; } });
     $('chat-message').addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') $('chat-form').requestSubmit(); });
     $('slide-modal-close').addEventListener('click', () => { $('slide-modal').hidden = true; }); $('slide-modal').addEventListener('click', (event) => { if (event.target === $('slide-modal')) $('slide-modal').hidden = true; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') $('slide-modal').hidden = true; });
-    setStep(1); loadRuntimeStatus(); loadPins(); loadFeature(activeFeature);
+    setStep(1); loadRuntimeStatus(); loadPins(); loadFeature(activeFeature); loadCaseCatalog();
   </script>
 </body>
 </html>

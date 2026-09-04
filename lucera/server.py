@@ -12,6 +12,7 @@ from urllib.parse import unquote, urlparse
 import config
 
 from .answer import resolve_api_key
+from .case_library import case_catalog
 from .db import LuceraDB
 from .complaints import (
     continue_conversation,
@@ -105,6 +106,9 @@ class LuceraHandler(BaseHTTPRequestHandler):
         if path == "/v1/regions":
             regions = [item for item in region_catalog() if item.get("name") == "영암군"]
             self._json({"scope": "영암군", "parent_regions": [], "regions": regions})
+            return
+        if path == "/v1/cases":
+            self._json({"scope": "영암군", "cases": case_catalog()})
             return
         if path == "/v1/map/pins":
             with self.db.lock:

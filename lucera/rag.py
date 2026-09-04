@@ -17,6 +17,7 @@ from datetime import date
 from typing import Any, Iterable
 
 from .answer import MAX_REASONS, ClaudeAnswerGenerator, _short_body
+from .case_library import get_case, resolve_case_type
 import config
 
 from .location import Location, normalize_address
@@ -162,6 +163,7 @@ def normalize_chat_input(payload: dict[str, Any]) -> dict[str, Any]:
         "include_comparative": bool(payload.get("include_comparative", True)),
         "include_map_context": bool(payload.get("include_map_context", True)),
         "scope": str(payload.get("scope") or "yeongam"),
+        "case_type": resolve_case_type(payload.get("case_type"), message),
         "image": payload.get("image"),
         "conversation_context": conversation_context,
         # Rule validity is evaluated against this date so a demo can be pinned
@@ -800,7 +802,7 @@ class SitingRuleEngine:
         }
 
 
-def _query_terms(message: str) -> tuple[list[str], list[str]]:
+def _query_terms(message: str, case_type: str | None = None) -> tuple[list[str], list[str]]:
     text = message or ""
     terms = ["태양광", "민원"]
     issue_codes: list[str] = []
@@ -808,6 +810,12 @@ def _query_terms(message: str) -> tuple[list[str], list[str]]:
         if any(term in text for term in synonyms):
             issue_codes.append(code)
             terms.extend(synonyms[:2])
+    selected_case = get_case(case_type)
+    if selected_case:
+        for code in selected_case.get("issues", ()):
+            if code not in issue_codes:
+                issue_codes.append(str(code))
+                terms.extend(ISSUE_QUERY_TERMS.get(str(code), ())[:2])
     if any(word in text for word in ("주민", "협의", "설명회", "동의")):
         terms.extend(("주민", "협의"))
     if any(word in text for word in ("허가", "설치", "가능", "불가", "검토")):
@@ -1219,7 +1227,7 @@ class RAGService:
         history_text = " ".join(
             item["content"] for item in data.get("conversation_context", []) if item.get("role") == "user"
         )
-        terms, issue_codes = _query_terms(f"{data['message']} {history_text}".strip())
+        terms, issue_codes = _query_terms(f"{data['message']} {history_text}".strip(), data.get("case_type"))
         search_payload = {
             "address": data["address"],
             "latitude": data["latitude"],
@@ -1235,6 +1243,7 @@ class RAGService:
             "scope": data["scope"],
         }
         result = self.search.search(search_payload)
+        result["detected_issue_codes"] = issue_codes
         evidence = [_evidence_from_result(item) for item in result.get("results", [])]
         return result, evidence
 
@@ -1280,6 +1289,11 @@ class RAGService:
         solverton_context = feature_context_for_location(self.db, location.eup_myeon, location.ri)
         rule_analysis = self.rules.evaluate(data, location, map_context)
         issue_counts = _issue_counts(results)
+        detected_issue_codes = list(search_result.get("detected_issue_codes") or [])
+        for code in detected_issue_codes:
+            # Keep the classifier result even when the evidence search returns
+            # no exact matching paragraph for the selected case.
+            issue_counts.setdefault(code, 1)
         repeated_codes = [code for code, count in issue_counts.items() if count >= 2]
         severe_repeated = any(code in {"glare_reflection", "safety_environment", "communication_procedure", "siting_permit_regulatory"} for code in repeated_codes)
         if rule_analysis["failed_count"]:
@@ -1308,6 +1322,9 @@ class RAGService:
             "conclusion_label": CONCLUSION_LABELS[conclusion],
             "rule_analysis": rule_analysis,
             "issue_counts": {code: {"label": ISSUE_LABELS.get(code, code), "count": count} for code, count in issue_counts.items()},
+            "classified_issue_codes": detected_issue_codes,
+            "case_type": data.get("case_type"),
+            "case_type_label": (get_case(data.get("case_type")) or {}).get("label"),
             "reason_cards": _reason_cards(results, rule_analysis, process_events, permit_analysis),
             "timeline": _timeline(process_events),
             "permit_analysis": permit_analysis,

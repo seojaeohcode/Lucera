@@ -147,7 +147,7 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
     if latitude is None or longitude is None:
         raise ValueError("주소의 좌표를 확인하지 못했습니다. 더 구체적인 영암군 주소를 입력해 주세요.")
     normalized_address = location.get("normalized_address") or address
-    title = " ".join(str(payload.get("title") or "영암군 민원").split())[:200]
+    title = " ".join(str(payload.get("title") or (result.get("analysis") or {}).get("case_type_label") or "영암군 민원").split())[:200]
     issue_counts = (result.get("analysis") or {}).get("issue_counts") or {}
     db.conn.execute(
         """INSERT INTO complaint_submission
@@ -162,7 +162,12 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
             location.get("eup_myeon"), location.get("ri"), latitude, longitude,
             (result.get("geocode") or {}).get("status") or "resolved",
             result.get("answer") or "", _json(list(issue_counts)),
-            _json({"image_received": bool(image), "input": {"site_area_sqm": payload.get("site_area_sqm"), "capacity_kw": payload.get("capacity_kw")}}),
+            _json({
+                "image_received": bool(image),
+                "case_type": (result.get("analysis") or {}).get("case_type"),
+                "case_type_label": (result.get("analysis") or {}).get("case_type_label"),
+                "input": {"site_area_sqm": payload.get("site_area_sqm"), "capacity_kw": payload.get("capacity_kw")},
+            }),
         ),
     )
     db.conn.execute(
@@ -171,7 +176,11 @@ def create_complaint(db: LuceraDB, payload: dict[str, Any]) -> dict[str, Any]:
            VALUES (?, ?, ?, ?, ?, ?)""",
         (conversation_id, complaint_id, normalized_address, latitude, longitude, _json({"scope": "yeongam"})),
     )
-    _insert_message(db, conversation_id, "user", text, {"kind": "complaint_intake", "image_received": bool(image)})
+    _insert_message(db, conversation_id, "user", text, {
+        "kind": "complaint_intake",
+        "image_received": bool(image),
+        "case_type": (result.get("analysis") or {}).get("case_type"),
+    })
     slide = _answer_slide_payload(result)
     _insert_message(db, conversation_id, "assistant", result.get("answer") or "", {"kind": "initial_analysis", "slide": slide})
     links = _link_evidence(db, complaint_id, result)
