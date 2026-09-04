@@ -194,6 +194,19 @@
      .map-image { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; opacity: .76; mix-blend-mode: multiply; }
     .map-canvas.has-imagery::before { opacity: .18; }
      .map-canvas.has-imagery::after { display: none; }
+     .map-canvas.distance-focus .map-pin, .map-canvas.distance-focus .map-area-labels { opacity: .08; pointer-events: none; }
+     .map-distance-overlay { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+     .map-distance-overlay[hidden] { display: none; }
+     .distance-ring { position: absolute; left: 50%; top: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; }
+     .distance-ring.threshold { border: 2px solid rgba(191, 65, 58, .84); background: rgba(217, 87, 78, .16); box-shadow: 0 0 0 1px rgba(255,255,255,.62), inset 0 0 0 1px rgba(255,255,255,.34); }
+     .distance-ring.observed { border: 2px dashed rgba(230, 161, 0, .95); background: rgba(255, 239, 177, .18); }
+     .distance-site { position: absolute; left: 50%; top: 50%; display: grid; place-items: center; width: 24px; height: 24px; transform: translate(-50%, -50%); border: 3px solid #fff; border-radius: 50%; color: #fff; background: var(--brand); box-shadow: 0 3px 10px rgba(23,61,54,.35); font-size: 11px; font-weight: 900; }
+     .distance-callout { position: absolute; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 9px 11px; border: 1px solid rgba(191,65,58,.48); border-radius: 11px; color: #6d302a; background: rgba(255,249,244,.94); box-shadow: 0 5px 14px rgba(23,61,54,.13); font-size: 10px; line-height: 1.45; }
+     .distance-callout strong, .distance-callout span { display: block; }
+     .distance-callout strong { color: #a64036; font-size: 11px; }
+     .distance-callout span { margin-top: 2px; }
+     .distance-visual-copy { margin-top: 9px; padding: 9px 11px; border-left: 3px solid var(--coral); border-radius: 0 10px 10px 0; color: #6d6258; background: #fff8f2; font-size: 10px; line-height: 1.5; }
+     .distance-visual-copy[hidden] { display: none; }
      .map-river, .map-grid { display: none; }
      .map-pin { position: absolute; z-index: 5; width: 28px; height: 34px; padding: 0; border: 0; border-radius: 0; background: url('/assets/solarcheck-pin.png') center / contain no-repeat; filter: drop-shadow(0 4px 5px rgba(23,61,54,.28)); transform: translate(-50%, -100%); transition: left .2s ease, top .2s ease, transform .16s ease; }
      .map-pin span { display: none; }
@@ -380,14 +393,18 @@
     .analysis-brief-head h3, .analysis-section-head h3 { color: var(--ink); }
     .analysis-brief-head span { color: var(--ink-soft); font-size: 10px; }
     .analysis-reasons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 11px; }
-    .insight-card { padding: 12px; border: 1px solid #d7e8dc; border-radius: 13px; background: #fff; }
+    .insight-card { display: block; width: 100%; padding: 12px; border: 1px solid #d7e8dc; border-radius: 13px; color: inherit; background: #fff; text-align: left; }
+    button.insight-card { font: inherit; cursor: pointer; transition: border-color .18s, box-shadow .18s, transform .18s; }
+    button.insight-card:hover, button.insight-card:focus-visible { border-color: var(--brand-bright); outline: none; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,85,43,.08); }
+    button.insight-card.has-distance-visual { cursor: zoom-in; }
+    button.insight-card.is-distance-selected { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(201,101,76,.12); }
     .insight-card[data-severity="high"] { border-color: #e7c979; background: #fffdf5; }
     .insight-card-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
     .insight-number { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 8px; color: #fff; background: var(--brand); font-size: 11px; font-weight: 900; }
     .insight-tag { padding: 4px 7px; border-radius: 99px; color: var(--brand); background: #eaf8f0; font-size: 9px; font-weight: 900; }
     .insight-card[data-status="fail"] .insight-tag { color: #8b5c00; background: var(--sun-pale); }
-    .insight-card h4 { margin-top: 9px; color: var(--ink); font-size: 13px; line-height: 1.4; }
-    .insight-card p { margin-top: 5px; color: var(--ink-soft); font-size: 11px; line-height: 1.55; }
+    .insight-card-title { display: block; margin-top: 9px; color: var(--ink); font-size: 13px; font-weight: 800; line-height: 1.4; }
+    .insight-card-body { display: block; margin-top: 5px; color: var(--ink-soft); font-size: 11px; line-height: 1.55; }
     .analysis-checks { display: grid; gap: 7px; margin-top: 10px; }
     .analysis-check { display: flex; gap: 8px; align-items: flex-start; color: #45685f; font-size: 11px; line-height: 1.5; }
     .analysis-check::before { content: "✓"; display: grid; place-items: center; flex: 0 0 auto; width: 17px; height: 17px; border-radius: 50%; color: #fff; background: var(--brand-bright); font-size: 10px; font-weight: 900; }
@@ -520,8 +537,9 @@
         <section class="map-card" aria-labelledby="map-title">
           <div class="map-heading"><div><div class="eyebrow">영암군</div><h2 id="map-title">저장된 핀</h2></div><div id="pin-counter" class="map-counter">불러오는 중</div></div>
           <p class="map-description">전체 허가 원장은 DB에 보존하고, 지도에는 리별로 배분한 180개 대표 핀만 표시합니다. 읍·면을 누른 뒤 리를 선택하면 더 작은 단위의 기록이 열립니다.</p>
-          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img class="map-base-image" src="/assets/yeongam-map-clean.png" alt="영암군 지형과 산과 물길 일러스트 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div></div>
+          <div id="map-canvas" class="map-canvas" role="application" aria-label="영암군 읍면 지도"><img class="map-base-image" src="/assets/yeongam-map-clean.png" alt="영암군 지형과 산과 물길 일러스트 지도"><img id="map-image" class="map-image" alt="VWorld 지도 영상" hidden><div class="map-river"></div><div class="map-grid"></div><div id="map-area-labels" class="map-area-labels" aria-label="지도 안 읍면 선택"></div><div id="map-distance-overlay" class="map-distance-overlay" hidden aria-hidden="true"></div></div>
           <div class="map-key"><span><i class="legend-dot coral"></i> 접수 민원</span><span><i class="legend-dot teal"></i> 공개 허가 표본</span><button id="reload-pins" class="button ghost" type="button" style="padding:4px 8px;margin-left:auto;font-size:10px">새로고침</button></div>
+          <div id="distance-visual-copy" class="distance-visual-copy" hidden role="status" aria-live="polite"></div>
           <div id="area-picker" class="area-picker" aria-label="영암 읍면 선택"></div>
           <div id="ri-picker" class="ri-picker" aria-label="선택한 읍면의 리 선택"></div>
           <div id="area-detail" class="area-detail">읍·면 버튼을 누르면 핀과 지역 요약이 바뀝니다.</div>
@@ -556,6 +574,8 @@
     let chatStepReady = false;
     let chatMessages = [];
     let currentMapContext = {};
+    let currentAnalysisLocation = null;
+    let activeDistanceCheck = null;
     let currentInitialSlide = null;
     const $ = (id) => document.getElementById(id);
     const jsonHeaders = { 'Content-Type': 'application/json' };
@@ -647,9 +667,53 @@
        const images = Array.isArray(context?.images) ? context.images : []; const image = $('map-image'); const canvas = $('map-canvas');
        if (images.length && images[0].url) {
          image.src = images[0].url; image.hidden = false; canvas.classList.add('has-imagery');
-         return;
+       } else {
+         image.removeAttribute('src'); image.hidden = true; canvas.classList.remove('has-imagery');
        }
-       image.removeAttribute('src'); image.hidden = true; canvas.classList.remove('has-imagery');
+       if (activeDistanceCheck) renderDistanceOverlay(activeDistanceCheck, context, currentAnalysisLocation);
+    }
+    function distanceCheckFromCard(card) {
+      const check = (card?.evidence || []).find((item) => item?.rule_id && (item.rule_id.includes('residence') || item.rule_id.includes('road')));
+      if (!check || !Number.isFinite(Number(check.threshold_value))) return null;
+      const kind = check.rule_id.includes('road') ? 'road' : 'residence';
+      return { kind, check, label: kind === 'road' ? '도로' : '주거지' };
+    }
+    function clearDistanceOverlay() {
+      activeDistanceCheck = null;
+      const overlay = $('map-distance-overlay'); const copy = $('distance-visual-copy');
+      if (overlay) { overlay.innerHTML = ''; overlay.hidden = true; }
+      $('map-canvas')?.classList.remove('distance-focus');
+      if (copy) { copy.hidden = true; copy.textContent = ''; }
+    }
+    function renderDistanceOverlay(distance, context = {}, location = {}) {
+      const overlay = $('map-distance-overlay'); const copy = $('distance-visual-copy'); const canvas = $('map-canvas');
+      if (!overlay || !distance) return;
+      const check = distance.check || {}; const threshold = Number(check.threshold_value); const observed = Number(check.observed_value);
+      if (!Number.isFinite(threshold) || !Number.isFinite(Number(location?.latitude)) || !Number.isFinite(Number(location?.longitude))) {
+        clearDistanceOverlay();
+        if (copy) { copy.hidden = false; copy.textContent = '좌표가 없어 이격거리 영역을 지도에 표시할 수 없습니다.'; }
+        return;
+      }
+      const closeImage = (context.images || []).find((item) => item.kind === 'aerial_close') || (context.images || [])[0] || {};
+      const extent = Math.max(threshold * 2.2, Number(closeImage.approx_extent_m) || 1800);
+      const thresholdWidth = Math.min(92, Math.max(12, threshold / extent * 200));
+      const observedWidth = Number.isFinite(observed) ? Math.min(thresholdWidth * .98, Math.max(5, observed / extent * 200)) : 0;
+      const isInside = Number.isFinite(observed) && observed < threshold;
+      overlay.innerHTML = '';
+      const zone = document.createElement('div'); zone.className = 'distance-ring threshold'; zone.style.width = `${thresholdWidth}%`; zone.title = `${distance.label} 기준 ${threshold.toLocaleString()}m 영역`; overlay.appendChild(zone);
+      if (observedWidth) { const measured = document.createElement('div'); measured.className = 'distance-ring observed'; measured.style.width = `${observedWidth}%`; measured.title = `입력된 최단거리 ${observed.toLocaleString()}m`; overlay.appendChild(measured); }
+      const site = document.createElement('div'); site.className = 'distance-site'; site.textContent = '예'; site.title = `설치 예정지 좌표 ${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}`; overlay.appendChild(site);
+      const callout = document.createElement('div'); callout.className = 'distance-callout'; callout.innerHTML = `<strong>${escapeHtml(distance.label)} 이격거리 목업</strong><span>기준 ${threshold.toLocaleString()}m · 입력 ${Number.isFinite(observed) ? `${observed.toLocaleString()}m` : '확인 필요'} · ${isInside ? '기준 영역 안쪽' : '기준 영역 밖'}</span>`; overlay.appendChild(callout);
+      overlay.hidden = false; overlay.setAttribute('aria-hidden', 'true'); canvas.classList.add('distance-focus');
+      if (copy) { copy.hidden = false; copy.innerHTML = `<strong>${escapeHtml(distance.label)} 이격거리 시각화 목업</strong> · 예시 좌표를 중심으로 기준 반경을 그렸습니다. <b>${isInside ? '입력 거리보다 기준 반경이 커서 기준 영역과 겹치는 모습입니다.' : '입력 거리와 기준 반경을 비교하는 모습입니다.'}</b> 실제 허가 판단에는 사용하지 않는 화면 예시입니다.`; }
+    }
+    function selectDistanceCheck(card) {
+      const distance = distanceCheckFromCard(card);
+      if (!distance) { clearDistanceOverlay(); return; }
+      activeDistanceCheck = distance;
+      renderDistanceOverlay(distance, currentMapContext, currentAnalysisLocation);
+      document.querySelectorAll('.insight-card').forEach((node) => node.classList.toggle('is-distance-selected', node.dataset.distanceKind === distance.kind));
+      $('map-canvas')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     function percent(value, min, max) { return Math.max(5, Math.min(95, ((value - min) / (max - min)) * 100)); }
     function renderPins(data) {
@@ -788,12 +852,14 @@
       else { const match = body.match(/관련 기록\s*(\d+)건,\s*사건\s*(\d+)건/); if (match) body = `관련 기록 ${match[1]}건 · 사건 ${match[2]}건이 확인됐습니다.`; }
       if (body.length > 138) body = `${body.slice(0, 136).trim()}…`;
       const tag = status === 'fail' ? '기준 미충족' : status === 'check_required' ? '확인 필요' : card?.severity === 'high' ? '주의해서 확인' : '관련 기록';
-      return { title: title.length > 58 ? `${title.slice(0, 56).trim()}…` : title, body: body || '연결된 자료를 확인해 주세요.', status, tag, severity: card?.severity || 'medium' };
+      const distance = distanceCheckFromCard(card);
+      return { title: title.length > 58 ? `${title.slice(0, 56).trim()}…` : title, body: body || '연결된 자료를 확인해 주세요.', status, tag, severity: card?.severity || 'medium', distanceKind: distance?.kind || '' };
     }
     function renderAnalysisReasons(model) {
       const cards = Array.isArray(model?.reason_cards) ? model.reason_cards : []; const visible = cards.slice(0, 4);
       $('analysis-brief-count').textContent = cards.length ? `핵심 신호 ${cards.length}개 중 ${visible.length}개` : '연결된 신호 없음';
-      $('analysis-reasons').innerHTML = visible.length ? visible.map((card, index) => { const item = compactAnalysisReason(card); return `<article class="insight-card" data-status="${escapeHtml(item.status)}" data-severity="${escapeHtml(item.severity)}"><div class="insight-card-top"><span class="insight-number">${index + 1}</span><span class="insight-tag">${escapeHtml(item.tag)}</span></div><h4>${escapeHtml(item.title)}</h4><p>${escapeHtml(item.body)}</p></article>`; }).join('') : '<div class="evidence-item">입력값과 연결된 핵심 신호를 찾지 못했습니다.</div>';
+      $('analysis-reasons').innerHTML = visible.length ? visible.map((card, index) => { const item = compactAnalysisReason(card); const action = item.distanceKind ? ' · 눌러서 지도 보기' : ''; return `<button type="button" class="insight-card ${item.distanceKind ? 'has-distance-visual' : ''}" data-status="${escapeHtml(item.status)}" data-severity="${escapeHtml(item.severity)}" data-distance-kind="${escapeHtml(item.distanceKind)}" aria-label="${escapeHtml(item.title)}${escapeHtml(action)}"><span class="insight-card-top"><span class="insight-number">${index + 1}</span><span class="insight-tag">${escapeHtml(item.tag)}${item.distanceKind ? ' · 지도 보기' : ''}</span></span><span class="insight-card-title">${escapeHtml(item.title)}</span><span class="insight-card-body">${escapeHtml(item.body)}</span></button>`; }).join('') : '<div class="evidence-item">입력값과 연결된 핵심 신호를 찾지 못했습니다.</div>';
+      $('analysis-reasons').querySelectorAll('.insight-card').forEach((button, index) => button.addEventListener('click', () => selectDistanceCheck(visible[index])));
     }
     function renderAnalysisChecks(model) {
       const cards = Array.isArray(model?.reason_cards) ? model.reason_cards : []; const checks = [];
@@ -802,7 +868,7 @@
     }
     function renderAnalysis(result) {
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
-      currentComplaint = result.complaint; currentConversationId = result.conversation_id; currentMapContext = analysis.map_context || {}; currentInitialSlide = result.answer_slide || null;
+      currentComplaint = result.complaint; currentConversationId = result.conversation_id; currentMapContext = analysis.map_context || {}; currentAnalysisLocation = location; currentInitialSlide = result.answer_slide || null; clearDistanceOverlay();
       hideAnalysisLoading();
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
       $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">현재 판단</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">이 주소의 사전점검 결과</span></div><div class="result-card"><div class="mini-label">분석 위치</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div>`;
