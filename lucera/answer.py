@@ -469,7 +469,18 @@ def build_prompt_pack(pack: dict[str, Any]) -> dict[str, Any]:
                     "case_id": item.get("case_id"),
                     "meeting_date": item.get("meeting_date"),
                     "region": item.get("region") or item.get("city_county"),
-                    "quote": (item.get("quote") or item.get("text_original") or "")[:MAX_QUOTE_CHARS],
+                    # Retrieval evidence uses `text`/`snippet`; older reason
+                    # cards used `text_original`. Keep the actual selected
+                    # passage in Claude's prompt so it cannot write a reason
+                    # against an empty or unrelated quote.
+                    "quote": (
+                        item.get("quote")
+                        or item.get("snippet")
+                        or item.get("text")
+                        or item.get("evidence_text")
+                        or item.get("text_original")
+                        or ""
+                    )[:MAX_QUOTE_CHARS],
                     "source_url": item.get("source_url"),
                 }
             )

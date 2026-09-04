@@ -15,7 +15,7 @@ from lucera.location import normalize_address
 from lucera.projects import create_project, get_precheck, get_project
 from lucera.regions import parent_region_catalog, region_catalog, region_for_name
 from lucera.review import rebuild_case_reviews
-from lucera.search import SearchService
+from lucera.search import SearchService, _contextual_snippet
 
 
 class LuceraTests(unittest.TestCase):
@@ -62,6 +62,14 @@ class LuceraTests(unittest.TestCase):
         )
         self.assertEqual(result["summary"]["total"], 1)
         self.assertEqual(result["results"][0]["issues"][0]["issue_code"], "communication_procedure")
+
+    def test_contextual_snippet_keeps_issue_sentence_and_drops_unrelated_tail(self) -> None:
+        snippet = _contextual_snippet(
+            "태양광 사업 개요를 설명했다. 개발행위허가와 이격거리 기준을 검토했다. 별도 행사 일정도 안내했다.",
+            ["태양광", "허가", "이격거리", "설치"],
+        )
+        self.assertIn("이격거리 기준을 검토했다", snippet)
+        self.assertNotIn("별도 행사 일정", snippet)
 
     def test_search_exposes_case_and_episode_identity(self) -> None:
         result = SearchService(self.db).search(

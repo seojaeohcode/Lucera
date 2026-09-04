@@ -78,6 +78,30 @@ class RagTests(unittest.TestCase):
         self.assertEqual(events[3]["outcome"], "completed")
         self.assertTrue(all(event["extraction_method"] == "deterministic_process_v1" for event in events))
 
+    def test_prompt_pack_passes_selected_retrieval_quote_to_answer_model(self) -> None:
+        prompt = build_prompt_pack(
+            {
+                "input": {},
+                "analysis": {
+                    "reason_cards": [
+                        {
+                            "category": "과거 쟁점",
+                            "reason": "관련 기록",
+                            "evidence": [
+                                {
+                                    "evidence_id": "ev-1",
+                                    "text": "개발행위허가와 이격거리 기준을 검토했다.",
+                                    "snippet": "이격거리 기준을 검토했다.",
+                                }
+                            ],
+                        }
+                    ]
+                },
+                "grounding": {"evidence_ids": ["ev-1"]},
+            }
+        )
+        self.assertEqual(prompt["reasons"][0]["evidence"][0]["quote"], "이격거리 기준을 검토했다.")
+
     def test_synthetic_rag_returns_rules_evidence_process_and_permits(self) -> None:
         seeded = seed_synthetic(self.db)
         self.db.commit()

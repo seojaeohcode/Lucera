@@ -74,6 +74,120 @@ def _snippet(text: str, keywords: list[str], max_chars: int = 420) -> str:
     return ("..." if start else "") + snippet + ("..." if start + max_chars < len(value) else "")
 
 
+GENERIC_EVIDENCE_TERMS = frozenset({"태양광", "민원", "허가", "설치", "검토", "사업"})
+ISSUE_SPECIFIC_TERMS = {
+    "siting_permit_regulatory": ("인허가", "개발행위", "이격거리", "규제"),
+    "communication_procedure": ("주민", "설명회", "협의", "동의", "고지", "의견수렴", "공청회"),
+    "safety_environment": ("배수", "침수", "토사", "사면", "산사태", "재해", "안전"),
+    "landscape_damage": ("경관", "조망", "차폐", "훼손"),
+    "agricultural_land_damage": ("농지", "간척지", "농업", "경작", "토지"),
+    "glare_reflection": ("빛반사", "반사광", "눈부심"),
+    "noise_living_discomfort": ("소음", "생활불편", "진동"),
+    "external_benefit_distribution": ("보상", "수익배분", "주민참여", "마을기금", "협약"),
+    "grid_connection": ("계통", "접속", "송전", "변전", "선로", "용량"),
+}
+
+
+def _issue_anchor_hits(issue_codes: list[str], text: str, row_issues: list[dict[str, Any]]) -> list[str]:
+    """Return issue-specific words actually present in this paragraph."""
+
+    haystack = " ".join(
+        [text]
+        + [str(item.get("evidence_span") or "") for item in row_issues if item.get("issue_code") in issue_codes]
+    )
+    anchors: list[str] = []
+    for code in issue_codes:
+        for term in ISSUE_SPECIFIC_TERMS.get(code, ()):
+            if term in haystack:
+                anchors.append(term)
+    return list(dict.fromkeys(anchors))
+
+
+def _contextual_snippet(text: str, keywords: list[str], max_chars: int = 360) -> str:
+    """Extract a short, query-focused passage from one minutes segment.
+
+    A minutes segment can contain several answers or a long OCR paragraph. The
+    UI should cite the sentence that matches the current issue, with at most
+    one adjacent sentence for context, rather than forwarding the whole
+    segment and making an unrelated sentence look like evidence.
+    """
+
+    value = " ".join((text or "").split())
+    if not value:
+        return ""
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?。！？])\s+", value) if part.strip()]
+    if len(sentences) <= 1:
+        return _snippet(value, keywords, max_chars)
+
+    terms = list(dict.fromkeys(term.strip() for term in keywords if term and term.strip()))
+    specific_terms = [term for term in terms if term not in GENERIC_EVIDENCE_TERMS]
+    scoring_terms = specific_terms or terms
+    matches: list[tuple[int, int]] = []
+    for index, sentence in enumerate(sentences):
+        score = sum(3 if term in sentence else 0 for term in scoring_terms)
+        score += sum(1 for term in terms if term in sentence)
+        if score:
+            matches.append((index, score))
+    if not matches:
+        return _snippet(value, terms, max_chars)
+
+    best_index, _ = max(matches, key=lambda item: (item[1], -item[0]))
+    candidates: list[tuple[int, int]] = [(best_index, best_index)]
+    for neighbor in (best_index - 1, best_index + 1):
+        if not 0 <= neighbor < len(sentences):
+            continue
+        start, end = sorted((best_index, neighbor))
+        if len(" ".join(sentences[start : end + 1])) <= max_chars:
+            candidates.append((start, end))
+    start, end = max(
+        candidates,
+        key=lambda bounds: (
+            sum(score for index, score in matches if bounds[0] <= index <= bounds[1]),
+            -len(" ".join(sentences[bounds[0] : bounds[1] + 1])),
+        ),
+    )
+    result = " ".join(sentences[start : end + 1])
+    if start:
+        result = "…" + result
+    if end < len(sentences) - 1:
+        result += "…"
+    return result if len(result) <= max_chars else _snippet(result, scoring_terms, max_chars)
+
+
+def _dedupe_and_diversify(results: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    """Remove mirrored source paragraphs and cap one meeting's dominance."""
+
+    unique: list[dict[str, Any]] = []
+    seen_text: set[str] = set()
+    meeting_counts: defaultdict[tuple[str, str], int] = defaultdict(int)
+    deferred: list[dict[str, Any]] = []
+    for item in results:
+        text_key = " ".join(str(item.get("evidence_text") or "").split())
+        if text_key and text_key in seen_text:
+            continue
+        if text_key:
+            seen_text.add(text_key)
+        meeting_key = (
+            str(item.get("meeting_date") or ""),
+            " ".join(str(item.get("meeting_title") or item.get("title") or "").split()),
+        )
+        if meeting_counts[meeting_key] >= 3:
+            deferred.append(item)
+            continue
+        meeting_counts[meeting_key] += 1
+        unique.append(item)
+        if len(unique) >= limit:
+            return unique
+
+    # If the corpus has fewer than three distinct paragraphs per meeting, use
+    # any remaining non-duplicate records to fill the requested limit.
+    for item in deferred:
+        if len(unique) >= limit:
+            break
+        unique.append(item)
+    return unique
+
+
 class SearchService:
     def __init__(self, db: LuceraDB, geocoder: JusoClient | None = None):
         self.db = db
@@ -189,6 +303,14 @@ class SearchService:
                 continue
             text = f"{row['title']} {row['text_redacted']}"
             keyword_hits = [keyword for keyword in keywords if keyword in text]
+            issue_anchor_hits = _issue_anchor_hits(issue_codes, text, row_issues)
+            # An issue label can be broad (for example, a paragraph may be
+            # tagged as regulatory because it says "허가"). For a typed case,
+            # require the paragraph itself or its extracted evidence span to
+            # contain a word specific to that issue. This prevents a grid or
+            # general permit discussion from becoming distance evidence.
+            if issue_codes and not issue_anchor_hits:
+                continue
             keyword_score = min(1.0, len(keyword_hits) / max(1, min(3, len(keywords))))
             match = self._location_match(location, row, links.get(row["segment_id"], []), radius_m)
             if not match and keyword_score <= 0:
@@ -248,7 +370,10 @@ class SearchService:
                     "speaker": {"name": row["speaker_name"], "role": row["speaker_role"]},
                     "location_match": match,
                     "issues": row_issues,
-                    "evidence_text": _snippet(row["text_redacted"], keyword_hits or [i["issue_code"] for i in row_issues]),
+                    "evidence_text": _contextual_snippet(
+                        row["text_redacted"],
+                        list(dict.fromkeys(issue_anchor_hits + keyword_hits)) or keywords,
+                    ),
                     "evidence_text_original": row["text_original"],
                     "source": {
                         "url": row["original_file_url"] or row["source_url"],
@@ -277,7 +402,7 @@ class SearchService:
             ),
             reverse=True,
         )
-        results = results[:limit]
+        results = _dedupe_and_diversify(results, limit)
         groups = defaultdict(int)
         case_groups: dict[str, dict[str, Any]] = {}
         for item in results:
@@ -721,11 +846,14 @@ class SearchService:
             elif target.city_county and _same(target.city_county, link["city_county"]):
                 candidates.append(
                     {
+                        # Keep the existing group for API compatibility, but
+                        # state clearly in the basis that this is only a
+                        # county-level comparison when an 읍·면 is supplied.
                         "group": "same_admin_area",
                         "precision": link["geo_precision"],
                         "distance_status": "unknown",
                         "distance_m": None,
-                        "basis": "동일 시·군·구(좌표 없음)",
+                        "basis": "동일 시·군·구 비교 참고(입력 읍·면·리와 직접 연결되지 않음)" if target.eup_myeon else "동일 시·군·구(좌표 없음)",
                         "confidence": min(0.65, float(link["confidence"] or 0.5)),
                         "place_name": link["raw_name"],
                     }
@@ -742,7 +870,7 @@ class SearchService:
                         "precision": "city_county" if meeting_city else "province",
                         "distance_status": "unknown",
                         "distance_m": None,
-                        "basis": "회의 개최 지방의회 행정구역(사업지 좌표 아님)",
+                        "basis": "회의 개최 지방의회 기준 비교 참고(사업지 좌표 아님)",
                         "confidence": 0.45 if meeting_city else 0.25,
                         "place_name": meeting_city or meeting_province,
                     }

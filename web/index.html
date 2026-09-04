@@ -163,6 +163,7 @@
     .evidence-item { padding: 12px 13px; border: 1px solid #ded3c4; border-radius: 13px; background: #fffcf6; font-size: 12px; }
     .evidence-item strong { display: block; margin-bottom: 3px; }
     .evidence-item span { color: var(--ink-soft); }
+    .evidence-item small { display: block; margin-top: 7px; color: #8a7e70; font-size: 10px; }
     .chat-shell { border: 1px solid #c4d8d1; border-radius: 18px; overflow: hidden; background: #f8fbf6; }
     .chat-head { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px; color: #fff; background: var(--ink); }
     .chat-head small { color: #b5d5c8; }
@@ -626,6 +627,11 @@
       try { renderFeature(await api(`/v1/features/${feature}`)); } catch (error) { $('feature-panel').textContent = `기능 데이터를 불러오지 못했습니다: ${error.message}`; }
     }
     function issueLabel(code) { return ({ safety_environment: '배수·안전', communication_procedure: '주민협의', grid_connection: '계통', agricultural_land_damage: '농지', landscape_damage: '경관', glare_reflection: '반사광', noise_living_discomfort: '소음', siting_permit_regulatory: '인허가', external_benefit_distribution: '이익공유' }[code] || code); }
+    function evidenceMatchLabel(item) {
+      const match = item?.location_match || {}; const group = match.group;
+      if (String(match.basis || '').includes('비교 참고') || String(match.basis || '').includes('사업지 좌표 아님')) return '영암군 비교 참고';
+      return ({ exact_site: '해당 위치 연결', nearby: '주변 위치 연결', same_village: '동일 리 참고', same_ri: '동일 리 참고', same_admin_area: '동일 읍·면 참고', comparative_case: '영암군 비교 참고' }[group] || '영암군 기록');
+    }
     async function selectArea(area) {
       activeArea = area; activeRiKey = ''; renderAreaButtons(); renderRiButtons(); renderPins({ pins, areas: mapAreas, ri_areas: mapRiAreas });
       if (area === '영암군 전체') return;
@@ -665,7 +671,7 @@
       const generation = (analysis.answer_generation || {}); const generationLabel = generation.mode === 'claude' ? `Claude · ${generation.model || 'API'}` : '로컬 안전 fallback';
       $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div><div class="result-card"><div class="mini-label">ANSWER ENGINE</div><strong>${escapeHtml(generationLabel)}</strong><span class="helper">지도 영상 자동 포함</span></div>`;
       $('initial-answer').textContent = analysis.answer || 'AI 설명이 생성되지 않았습니다.';
-      $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span></div>`).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
+      $('evidence-list').innerHTML = evidence.length ? evidence.slice(0, 5).map((item) => { const issues = (item.issues || []).map(issueLabel).filter(Boolean).join(' · '); const meta = [evidenceMatchLabel(item), item.date, issues].filter(Boolean).join(' · '); return `<div class="evidence-item"><strong>${escapeHtml(item.title || '영암 근거')}</strong><span>${escapeHtml(item.snippet || item.text || '')}</span><small>${escapeHtml(meta)}</small></div>`; }).join('') : '<div class="evidence-item">현재 연결된 회의록 근거가 없어 입력 조건과 규칙을 중심으로 설명했습니다.</div>';
       renderMapContext(analysis.map_context || {});
       $('chat-address-label').textContent = currentComplaint.normalized_address || location.normalized_address || '영암군 좌표 연결';
       chatMessages = [];
