@@ -27,6 +27,8 @@ YEONGAM_EUP_MYEON = (
     "영암읍", "삼호읍", "덕진면", "금정면", "신북면", "시종면",
     "도포면", "군서면", "미암면", "학산면", "서호면",
 )
+NATIONAL_DISTANCE_CAP_M = 200
+F1_ADJACENT_COUNTIES = ("해남군", "무안군", "나주시", "강진군", "장흥군")
 
 
 def _number(value: Any) -> float | None:
@@ -50,11 +52,16 @@ def _load_csv(path: Path) -> list[dict[str, str]]:
 
 
 @lru_cache(maxsize=1)
-def _ordinance_rows() -> tuple[dict[str, Any], ...]:
+def _all_ordinance_rows() -> tuple[dict[str, Any], ...]:
     if not ORDINANCE_PATH.is_file():
         return ()
     rows = json.loads(ORDINANCE_PATH.read_text(encoding="utf-8"))
-    return tuple(row for row in rows if row.get("시군") == YEONGAM_COUNTY)
+    return tuple(rows)
+
+
+@lru_cache(maxsize=1)
+def _ordinance_rows() -> tuple[dict[str, Any], ...]:
+    return tuple(row for row in _all_ordinance_rows() if row.get("시군") == YEONGAM_COUNTY)
 
 
 @lru_cache(maxsize=1)
@@ -68,17 +75,30 @@ def _grid_rows() -> tuple[dict[str, str], ...]:
 
 
 def yeongam_f1() -> dict[str, Any]:
-    """Return the source-backed Yeongam ordinance layer.
-
-    F1's national border visualization is intentionally not exposed here:
-    Lucera's product scope is Yeongam only.  The exact Yeongam article and
-    comparison values remain available as the local layer used by F2 checks.
-    """
+    """Return Yeongam's rule alongside the 22-county comparison layer."""
 
     row = dict(_ordinance_rows()[0]) if _ordinance_rows() else {}
+    all_rows = {str(item.get("시군") or ""): item for item in _all_ordinance_rows()}
+    comparison_items = []
+    for item in _all_ordinance_rows():
+        county = str(item.get("시군") or "").strip()
+        if not county:
+            continue
+        comparison_items.append(
+            {
+                "county": county,
+                "road_m": _number(item.get("도로_m")),
+                "residence_m": _number(item.get("주거10호이상_m")),
+                "effective_date": item.get("시행일"),
+                "article": item.get("조문"),
+            }
+        )
+    road_known = [item["road_m"] for item in comparison_items if item["road_m"] is not None]
+    residence_known = [item["residence_m"] for item in comparison_items if item["residence_m"] is not None]
+    adjacent_counties = [county for county in F1_ADJACENT_COUNTIES if county in all_rows]
     return {
         "feature": "F1",
-        "name": "영암군 태양광 설치 기준",
+        "name": "전남 시군 조례 비교",
         "scope": YEONGAM_COUNTY,
         "status": "ready" if row else "source_missing",
         "verification": "solverton_reference_snapshot",
@@ -102,7 +122,19 @@ def yeongam_f1() -> dict[str, Any]:
             "cultural_asset_m": _number(row.get("문화재_m")),
             "note": row.get("비고"),
         },
-        "notice": "주거지·도로와의 거리 등 영암군 태양광 설치 기준을 보여줍니다. 최종 허가 판단 전 현행 조문을 다시 확인해야 합니다.",
+        "national_distance_cap_m": NATIONAL_DISTANCE_CAP_M,
+        "national_cap_effective_date": "2026-09-18",
+        "comparison_basis": "주요도로 이격거리",
+        "adjacent_counties": adjacent_counties,
+        "comparison_items": comparison_items,
+        "comparison_summary": {
+            "county_count": len(comparison_items),
+            "road_known_count": len(road_known),
+            "road_over_cap_count": sum(value > NATIONAL_DISTANCE_CAP_M for value in road_known),
+            "residence_known_count": len(residence_known),
+            "residence_over_cap_count": sum(value > NATIONAL_DISTANCE_CAP_M for value in residence_known),
+        },
+        "notice": "영암군과 전남 21개 시군의 조례 기준을 비교합니다. 200m는 국가 상한 비교선이며, 2026-09-18 토글은 상한 적용을 가정한 화면 비교입니다. 최종 허가 판단 전 현행 조문을 다시 확인해야 합니다.",
     }
 
 

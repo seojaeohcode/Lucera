@@ -329,6 +329,49 @@
     .grid-signal.signal-high i { background: var(--coral); box-shadow: 0 0 0 3px rgba(217,111,82,.14); }
     .feature-bar { height: 4px; margin-top: 5px; overflow: hidden; border-radius: 99px; background: #dcefe5; }
     .feature-bar i { display: block; height: 100%; border-radius: inherit; background: var(--sun); }
+    .f1-panel { display: grid; gap: 13px; }
+    .f1-intro { display: grid; gap: 4px; margin-top: 1px; color: #5b796d; font-size: 11px; line-height: 1.5; }
+    .f1-intro strong { color: var(--ink); font-size: 13px; }
+    .f1-mode-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 9px 10px; border: 1px solid #d7e8dc; border-radius: 12px; background: #f7fbf6; }
+    .f1-mode-label { color: #5b796d; font-size: 10px; font-weight: 800; }
+    .f1-mode-switch { display: inline-flex; gap: 3px; padding: 3px; border-radius: 99px; background: #e4f1e7; }
+    .f1-mode-button { border: 0; border-radius: 99px; padding: 6px 9px; color: #628076; background: transparent; font-size: 10px; font-weight: 900; }
+    .f1-mode-button:hover, .f1-mode-button:focus { outline: 2px solid rgba(21,157,99,.25); outline-offset: 1px; }
+    .f1-mode-button.active { color: #fff; background: var(--brand); }
+    .f1-summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .f1-summary-card { padding: 10px; border-radius: 11px; background: #eef8ef; }
+    .f1-summary-card strong { display: block; color: var(--ink); font-size: 17px; }
+    .f1-summary-card span { display: block; margin-top: 2px; color: #5b796d; font-size: 9px; line-height: 1.35; }
+    .f1-chart { padding: 11px 10px 9px; border: 1px solid #d9e8da; border-radius: 13px; background: #fffdf8; }
+    .f1-chart-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; color: #6d8075; font-size: 9px; }
+    .f1-chart-head strong { color: var(--ink); font-size: 11px; }
+    .f1-scale { position: relative; height: 20px; margin: 7px 0 0 86px; color: #87988d; font-size: 8px; }
+    .f1-scale span { position: absolute; transform: translateX(-50%); }
+    .f1-scale span:first-child { left: 0; transform: none; }
+    .f1-scale span:last-child { left: 100%; }
+    .f1-cap-label { color: var(--sun-deep); font-weight: 900; }
+    .f1-bar-list { display: grid; gap: 8px; }
+    .f1-bar-row { display: grid; grid-template-columns: 78px minmax(0, 1fr) 42px 56px; gap: 8px; align-items: center; }
+    .f1-bar-row > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #466b63; font-size: 10px; }
+    .f1-bar-row.is-focus > strong { color: var(--brand); font-weight: 950; }
+    .f1-bar-value { min-width: 42px; color: var(--ink); font-size: 10px; font-weight: 900; text-align: right; }
+    .f1-bar-track { position: relative; height: 10px; overflow: visible; border-radius: 99px; background: #edf4ed; }
+    .f1-bar-track::after { position: absolute; top: -4px; bottom: -4px; left: var(--cap-position); width: 1px; content: ""; background: var(--sun-deep); opacity: .75; }
+    .f1-bar-fill { position: relative; z-index: 1; display: block; height: 100%; min-width: 5px; border-radius: inherit; background: var(--brand-bright); transition: width .45s ease, background-color .35s ease; }
+    .f1-bar-row.is-over .f1-bar-fill { background: var(--coral); }
+    .f1-bar-row.is-capped .f1-bar-fill { background: var(--brand-bright); }
+    .f1-bar-row.is-unknown .f1-bar-track { background: repeating-linear-gradient(135deg, #eef3ee 0 5px, #e2ebe3 5px 10px); }
+    .f1-state { min-width: 48px; color: #6d8075; font-size: 9px; font-weight: 800; text-align: right; }
+    .f1-bar-row.is-over .f1-state { color: #b14d36; }
+    .f1-bar-row.is-capped .f1-state { color: var(--brand); }
+    .f1-chart-note { margin-top: 9px; color: #7b887f; font-size: 9px; line-height: 1.45; }
+    .f1-chart-note b { color: var(--sun-deep); }
+    .f1-all { border-top: 1px dashed #c9ded0; padding-top: 10px; }
+    .f1-all summary { cursor: pointer; color: #47756b; font-size: 10px; font-weight: 900; }
+    .f1-all-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 14px; margin-top: 9px; }
+    .f1-all-row { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #edf3ed; color: #466b63; font-size: 9px; }
+    .f1-all-row strong { color: var(--ink); }
+    .f1-all-row span { color: #6d8075; white-space: nowrap; }
     .analysis-summary { margin-bottom: 16px; }
     .analysis-summary .result-card { min-height: 112px; }
     .analysis-summary .result-card strong { color: var(--ink); }
@@ -358,6 +401,7 @@
     .analysis-evidence .evidence-item small { margin-top: 5px; }
     .analysis-note { margin-top: 10px; color: #7a8a82; font-size: 10px; line-height: 1.5; }
     @media (max-width: 700px) { .analysis-reasons { grid-template-columns: 1fr; } }
+    @media (max-width: 560px) { .f1-summary-grid { grid-template-columns: 1fr 1fr; } .f1-summary-card:last-child { grid-column: 1 / -1; } .f1-bar-row { grid-template-columns: 68px minmax(0, 1fr) 38px 48px; gap: 6px; } .f1-scale { margin-left: 74px; } .f1-all-list { grid-template-columns: 1fr; } }
     @media (min-width: 761px) {
       .shell { width: min(1480px, calc(100% - 36px)); }
       .workspace.page-map { grid-template-columns: minmax(0, 1fr); }
@@ -508,6 +552,7 @@
     let activeArea = '영암군 전체';
     let activeRiKey = '';
     let activeFeature = 'f1';
+    let f1Mode = 'current';
     let chatStepReady = false;
     let chatMessages = [];
     let currentMapContext = {};
@@ -665,8 +710,15 @@
       const panel = $('feature-panel');
       if (!panel) return;
       if (data.feature === 'F1') {
-        const rule = data.rule || {};
-         panel.innerHTML = `<div class="feature-panel-head"><h3>${escapeHtml(data.name || '영암군 태양광 설치 기준')}</h3><small>${escapeHtml(rule.effective_date || '시행일 확인 필요')}</small></div><div class="feature-metrics"><div class="feature-metric"><strong>${rule.road_m == null ? '확인 필요' : `${Number(rule.road_m).toLocaleString()}m`}</strong><span>주요도로</span></div><div class="feature-metric"><strong>${rule.residence_5plus_m == null ? '확인 필요' : `${Number(rule.residence_5plus_m).toLocaleString()}m`}</strong><span>주거지</span></div><div class="feature-metric"><strong>${escapeHtml(rule.article || '조문 확인')}</strong><span>근거 조문</span></div></div><p class="feature-note">${escapeHtml(rule.road_scope || '')}<br>${escapeHtml(rule.note || data.notice || '')}</p>`;
+        const rule = data.rule || {}; const items = data.comparison_items || []; const cap = Number(data.national_distance_cap_m || 200); const mode = f1Mode === 'after' ? 'after' : 'current'; const after = mode === 'after';
+        const byCounty = new Map(items.map((item) => [item.county, item])); const compareNames = [data.scope, ...(data.adjacent_counties || [])].filter((name, index, names) => name && names.indexOf(name) === index); const comparisonItems = compareNames.map((name) => byCounty.get(name)).filter(Boolean);
+        const roadValues = items.map((item) => Number(item.road_m)).filter((value) => Number.isFinite(value)); const maxValue = Math.max(cap, 100, ...roadValues); const capPosition = Math.min(100, (cap / maxValue) * 100);
+        const formatDistance = (value) => value == null || !Number.isFinite(Number(value)) ? '확인 필요' : `${Number(value).toLocaleString()}m`;
+        const renderBar = (item) => { const raw = item.road_m == null ? null : Number(item.road_m); const known = Number.isFinite(raw); const display = known ? (after ? Math.min(raw, cap) : raw) : 0; const width = known ? Math.max(5, (display / maxValue) * 100) : 0; const capped = after && known && raw > cap; const over = !after && known && raw > cap; const rowClass = capped ? 'is-capped' : over ? 'is-over' : !known ? 'is-unknown' : ''; const state = !known ? '확인 필요' : capped ? '상한 적용' : over ? '200m 초과' : '200m 이내'; return `<div class="f1-bar-row ${item.county === data.scope ? 'is-focus' : ''} ${rowClass}"><strong>${escapeHtml(item.county)}</strong><div class="f1-bar-track" style="--cap-position:${capPosition}%"><i class="f1-bar-fill" style="width:${width}%"></i></div><span class="f1-bar-value">${known ? `${display.toLocaleString()}m` : '—'}</span><span class="f1-state">${state}</span></div>`; };
+        const summary = data.comparison_summary || {}; const countyCount = Number(summary.county_count || items.length); const roadOver = Number(summary.road_over_cap_count || 0); const residenceOver = Number(summary.residence_over_cap_count || 0);
+        const allRows = items.map((item) => `<div class="f1-all-row"><strong>${escapeHtml(item.county)}</strong><span>도로 ${formatDistance(item.road_m)} · 주거 ${formatDistance(item.residence_m)}</span></div>`).join('');
+        panel.innerHTML = `<div class="feature-panel-head"><h3>${escapeHtml(data.name || '전남 시군 조례 비교')}</h3><small>${countyCount}개 시군</small></div><div class="f1-panel"><div class="f1-intro"><strong>경계 하나를 넘으면 태양광 설치 기준이 달라집니다.</strong><span>영암군 기준을 인접 시군과 같은 축에 놓고, 국가 200m 비교선까지 함께 봅니다.</span></div><div class="f1-mode-row"><span class="f1-mode-label">기준 시점</span><div class="f1-mode-switch" role="group" aria-label="조례 기준 시점 선택"><button type="button" class="f1-mode-button ${!after ? 'active' : ''}" data-f1-mode="current" aria-pressed="${!after}">현행 조례</button><button type="button" class="f1-mode-button ${after ? 'active' : ''}" data-f1-mode="after" aria-pressed="${after}">${escapeHtml(data.national_cap_effective_date || '2026-09-18')} 상한 적용</button></div></div><div class="f1-summary-grid"><div class="f1-summary-card"><strong>${roadOver} / ${countyCount}</strong><span>주요도로 기준 200m 초과</span></div><div class="f1-summary-card"><strong>${residenceOver} / ${countyCount}</strong><span>주거지 기준 200m 초과</span></div><div class="f1-summary-card"><strong>${cap.toLocaleString()}m</strong><span>국가 상한 비교선</span></div></div><div class="f1-chart" data-mode="${mode}"><div class="f1-chart-head"><strong>인접 시군 주요도로 이격거리</strong><span>${after ? '상한 적용을 가정한 값' : '현행 조례 값'}</span></div><div class="f1-scale"><span>0m</span><span class="f1-cap-label" style="left:${capPosition}%">국가 200m</span><span>${maxValue.toLocaleString()}m</span></div><div class="f1-bar-list">${comparisonItems.map(renderBar).join('')}</div><p class="f1-chart-note"><b>●</b> 200m 초과 기준은 주황·빨강으로, 상한 적용 후에는 초록으로 바뀝니다. 나주시는 원문 기준값 확인이 필요합니다.</p></div><details class="f1-all"><summary>전남 22개 시군 전체 기준 보기</summary><div class="f1-all-list">${allRows}</div></details><p class="feature-note">${escapeHtml(rule.road_scope || '')}<br>${escapeHtml(rule.note || '')}<br>${escapeHtml(data.notice || '')}</p></div>`;
+        panel.querySelectorAll('[data-f1-mode]').forEach((button) => button.addEventListener('click', () => { f1Mode = button.dataset.f1Mode; renderFeature(data); }));
         return;
       }
       if (data.feature === 'F3') {
