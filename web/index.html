@@ -288,13 +288,12 @@
       }
     }
     function renderMapContext(context) {
-      const images = Array.isArray(context?.images) ? context.images : []; const image = $('map-image'); const canvas = $('map-canvas'); const note = $('map-video-note');
+      const images = Array.isArray(context?.images) ? context.images : []; const image = $('map-image'); const canvas = $('map-canvas'); const notes = [$('map-video-note'), $('map-video-status')].filter(Boolean);
       if (images.length && images[0].url) {
-        image.src = images[0].url; image.hidden = false; canvas.classList.add('has-imagery'); note.className = 'map-video-status ready'; note.textContent = `VWorld 지도 영상 ${images.length}장 자동 포함 · 이미지도 같은 분석에 전달됨`;
+        image.src = images[0].url; image.hidden = false; canvas.classList.add('has-imagery'); notes.forEach((note) => { note.className = 'map-video-status ready'; note.textContent = `VWorld 지도 영상 ${images.length}장 자동 포함 · 이미지도 같은 분석에 전달됨`; });
         return;
       }
-      image.removeAttribute('src'); image.hidden = true; canvas.classList.remove('has-imagery'); note.className = 'map-video-status';
-      note.textContent = context?.reason === 'vworld_key_missing' ? '지도 영상 자동 포함 요청됨 · VWorld 키 설정 후 영상이 표시됩니다.' : '지도 영상 자동 포함 요청됨 · 현재는 핀·읍면 UI를 표시합니다.';
+      image.removeAttribute('src'); image.hidden = true; canvas.classList.remove('has-imagery'); const message = context?.reason === 'vworld_key_missing' ? '지도 영상 자동 포함 요청됨 · VWorld 키 설정 후 영상이 표시됩니다.' : '지도 영상 자동 포함 요청됨 · 현재는 핀·읍면 UI를 표시합니다.'; notes.forEach((note) => { note.className = 'map-video-status'; note.textContent = message; });
     }
     function percent(value, min, max) { return Math.max(5, Math.min(95, ((value - min) / (max - min)) * 100)); }
     function renderPins(data) {
