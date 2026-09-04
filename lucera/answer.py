@@ -35,11 +35,17 @@ DEFAULT_MAX_TOKENS = 8000
 # How much of the pack the model is allowed to see. Trimming is not only about
 # cost: a smaller pack makes the numeric guard's whitelist tight, so a fabricated
 # figure has nowhere to hide.
-MAX_REASONS = 6
-MAX_QUOTES_PER_REASON = 2
-MAX_QUOTE_CHARS = 400
-MAX_TIMELINE = 12
-MAX_PERMIT_SAMPLES = 5
+MAX_REASONS = 5
+MAX_QUOTES_PER_REASON = 1
+MAX_QUOTE_CHARS = 220
+MAX_TIMELINE = 6
+MAX_PERMIT_SAMPLES = 3
+MAX_MAP_OBSERVATIONS = 2
+MAX_CHECKLIST = 4
+MAX_LIMITATIONS = 1
+MAX_TITLE_CHARS = 52
+MAX_BODY_CHARS = 180
+MAX_LIST_ITEM_CHARS = 100
 
 SYSTEM_PROMPT = """당신은 태양광 발전시설 설치 예정지 사전점검 보고서를 쓰는 행정 실무 보조자입니다.
 
@@ -62,19 +68,28 @@ SYSTEM_PROMPT = """당신은 태양광 발전시설 설치 예정지 사전점�
 7. 주민 반대 기록은 반려 근거가 아니라 협의가 필요하다는 신호로 서술합니다.
 8. status가 check_required인 항목은 미충족이 아니라 확인이 필요한 상태로 씁니다.
 
+문체와 분량:
+9. 결론은 한 문장, 핵심 근거는 최대 5개, 영상 관찰은 최대 2개, 다음 확인은 최대 4개,
+   한계는 최대 1개만 씁니다.
+10. 각 근거와 관찰은 한두 문장, 가능하면 120자 이내로 씁니다. 같은 뜻을 반복하지 않습니다.
+11. "이 항목은", "상태로 남아 있습니다", "담당자가 재확인할 필요가 있습니다"를 반복하지
+   말고, "150m로 기준 300m 미충족", "현장 확인 필요"처럼 직접적으로 씁니다.
+12. 보고서 머리말, 인사말, 자기 설명, "주요 판단 재료", "확인된 처리 과정" 같은 메타 문구를
+   만들지 않습니다. evidence_ids는 JSON 필드에만 넣고 본문에는 근거 ID를 쓰지 않습니다.
+
 지도 이미지가 함께 주어지는 경우:
-9. 이미지는 설치 예정지와 그 주변의 항공영상·배경지도입니다. 붉은 표식이 예정지입니다.
-10. 이미지에서 본 것은 map_observations에만 씁니다. reasons 본문에는 넣지 않습니다.
-11. 이미지에서 거리·개수·면적·높이를 재거나 세지 않습니다. map_observations에는
+13. 이미지는 설치 예정지와 그 주변의 항공영상·배경지도입니다. 붉은 표식이 예정지입니다.
+14. 이미지에서 본 것은 map_observations에만 씁니다. reasons 본문에는 넣지 않습니다.
+15. 이미지에서 거리·개수·면적·높이를 재거나 세지 않습니다. map_observations에는
     숫자를 쓰지 않습니다. "주거지까지 약 100m"가 아니라 "북측에 주택이 모여 있음"처럼
     방향과 배치만 서술합니다.
-12. 이미지에서 본 것은 사실이 아니라 관찰입니다. 확정 표현 대신 "보입니다",
+16. 이미지에서 본 것은 사실이 아니라 관찰입니다. 확정 표현 대신 "보입니다",
     "것으로 보입니다"를 쓰고, 현장 확인이 필요하다는 점을 함께 적습니다.
-13. 이미지에 보이지 않는 것을 추측해서 쓰지 않습니다. 영상이 흐리거나 판독이
+17. 이미지에 보이지 않는 것을 추측해서 쓰지 않습니다. 영상이 흐리거나 판독이
     어려우면 그렇게 적습니다.
 
 사용자가 올린 현장 이미지가 함께 주어지는 경우:
-14. 현장 이미지에서 관찰한 내용도 관찰로만 서술하고, 사진만으로 거리·면적·허가
+18. 현장 이미지에서 관찰한 내용도 관찰로만 서술하고, 사진만으로 거리·면적·허가
     상태를 확정하지 않습니다. 이미지를 읽지 못하면 그 사실을 한계로 적습니다.
 
 출력은 아래 JSON 스키마만 반환합니다. 설명이나 코드블록 표시 없이 JSON만 씁니다.
@@ -84,21 +99,21 @@ SYSTEM_PROMPT = """당신은 태양광 발전시설 설치 예정지 사전점�
   "reasons": [
     {
       "title": "짧은 제목",
-      "body": "2~4문장. 무엇이 확인되었고 왜 검토가 필요한지.",
+      "body": "무엇이 확인됐고 어떤 확인이 필요한지 한두 문장으로.",
       "evidence_ids": ["allowed_evidence_ids 목록에 있는 값만"]
     }
   ],
   "map_observations": [
     {
       "observation": "지도에서 관찰한 주변 상황. 숫자 없이 방향·배치·지형만.",
-      "relevance": "이 관찰이 태양광 입지 검토에서 왜 의미가 있는지"
+      "relevance": "입지 검토에서 의미가 있는지 짧게"
     }
   ],
   "checklist": ["담당자가 다음에 확인할 항목", "..."],
   "limitations": ["이 답변으로 확정할 수 없는 것"]
 }
 
-reasons는 3~5개로 씁니다. 이미지가 없으면 map_observations는 빈 배열로 둡니다."""
+reasons는 가장 중요한 3~5개만 씁니다. 이미지가 없으면 map_observations는 빈 배열로 둡니다."""
 
 
 def _load_env_file(path: Path) -> dict[str, str]:
@@ -270,6 +285,79 @@ def _extract_json(raw: str) -> dict[str, Any] | None:
                     return None
                 return value if isinstance(value, dict) else None
     return None
+
+
+def _clip_text(value: Any, max_chars: int) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    if len(text) <= max_chars:
+        return text
+    clipped = text[:max_chars].rsplit(" ", 1)[0].rstrip(" ,.!?;:·")
+    return f"{clipped}…"
+
+
+def _short_body(value: Any, max_chars: int = MAX_BODY_CHARS) -> str:
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    for before, after in (
+        ("이 항목은 미충족이 아니라 확인이 필요한 상태로 남아 있습니다.", "미충족이 아니라 확인 필요."),
+        ("이 항목은 fail로 판정되어 있어 담당자의 추가 확인이 필요합니다.", "기준 미충족으로 현장 확인 필요."),
+        ("담당자가 재확인할 필요가 있습니다.", "현장 확인 필요."),
+        ("후속 확인이 필요한 상태로 남아 있습니다.", "후속 확인 필요."),
+    ):
+        text = text.replace(before, after)
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
+    return _clip_text(" ".join(sentences[:2] or [text]), max_chars)
+
+
+def _compact_structured(value: dict[str, Any]) -> dict[str, Any]:
+    """Normalize Claude's prose shape before validation and rendering.
+
+    The model still supplies the grounded facts, but the application owns the
+    amount and shape of text that reaches a 담당자. This keeps a verbose model
+    response from turning the result card into a long report.
+    """
+
+    compact: dict[str, Any] = {
+        "conclusion_sentence": _clip_text(value.get("conclusion_sentence"), 90),
+        "reasons": [],
+        "map_observations": [],
+        "checklist": [],
+        "limitations": [],
+    }
+    seen_reasons: set[tuple[str, str]] = set()
+    for item in value.get("reasons") or []:
+        if not isinstance(item, dict):
+            continue
+        title = _clip_text(item.get("title"), MAX_TITLE_CHARS)
+        body = _short_body(item.get("body"))
+        evidence_ids = list(dict.fromkeys(str(entry) for entry in (item.get("evidence_ids") or []) if entry))[:2]
+        identity = (title, body)
+        if not title or not body or not evidence_ids or identity in seen_reasons:
+            continue
+        seen_reasons.add(identity)
+        compact["reasons"].append({"title": title, "body": body, "evidence_ids": evidence_ids})
+        if len(compact["reasons"]) >= MAX_REASONS:
+            break
+
+    for item in value.get("map_observations") or []:
+        if not isinstance(item, dict):
+            continue
+        observation = _short_body(item.get("observation"), 130)
+        relevance = _short_body(item.get("relevance"), 100)
+        if observation:
+            compact["map_observations"].append({"observation": observation, "relevance": relevance})
+        if len(compact["map_observations"]) >= MAX_MAP_OBSERVATIONS:
+            break
+
+    for key, limit in (("checklist", MAX_CHECKLIST), ("limitations", MAX_LIMITATIONS)):
+        seen: set[str] = set()
+        for item in value.get(key) or []:
+            text = _short_body(item, MAX_LIST_ITEM_CHARS)
+            if text and text not in seen:
+                compact[key].append(text)
+                seen.add(text)
+            if len(compact[key]) >= limit:
+                break
+    return compact
 
 
 MAX_IMAGES = 3
@@ -466,34 +554,29 @@ def build_prompt_pack(pack: dict[str, Any]) -> dict[str, Any]:
 
 def _render(structured: dict[str, Any], pack: dict[str, Any]) -> str:
     analysis = pack.get("analysis", {})
-    lines = ["■ 결론", f"   {structured['conclusion_sentence'].strip()}", ""]
-    lines.append("■ 검토가 필요한 이유")
-    for index, reason in enumerate(structured.get("reasons") or [], start=1):
-        lines.append(f"   {index}. {str(reason.get('title') or '').strip()}")
-        lines.append(f"      {str(reason.get('body') or '').strip()}")
-        ids = ", ".join(str(value) for value in (reason.get("evidence_ids") or []))
-        if ids:
-            lines.append(f"      근거: {ids}")
+    lines = ["결론", structured["conclusion_sentence"].strip()]
+    reasons = structured.get("reasons") or []
+    if reasons:
+        lines.extend(["", "핵심 근거"])
+        for reason in reasons:
+            lines.append(f"- {str(reason.get('title') or '').strip()}: {str(reason.get('body') or '').strip()}")
     observations = [item for item in (structured.get("map_observations") or []) if isinstance(item, dict)]
     if observations:
-        lines.extend(["", "■ 항공영상에서 관찰한 주변 상황 (AI 판독 · 실측 아님)"])
+        lines.extend(["", "영상 관찰 (실측 아님)"])
         for observation in observations:
-            lines.append(f"   - {str(observation.get('observation') or '').strip()}")
+            line = f"- {str(observation.get('observation') or '').strip()}"
             relevance = str(observation.get("relevance") or "").strip()
             if relevance:
-                lines.append(f"     → {relevance}")
-        lines.append("     ※ 위 항목은 영상 판독 결과이며 현장 확인으로 검증해야 합니다.")
+                line += f" · {relevance}"
+            lines.append(line)
     checklist = structured.get("checklist") or []
     if checklist:
-        lines.extend(["", "■ 다음에 확인할 것"])
-        lines.extend(f"   - {str(item).strip()}" for item in checklist)
+        lines.extend(["", "다음 확인"])
+        lines.extend(f"- {str(item).strip()}" for item in checklist)
     limitations = structured.get("limitations") or analysis.get("limitations") or []
     if limitations:
-        lines.extend(["", "■ 이 답변의 한계"])
-        lines.extend(f"   - {str(item).strip()}" for item in limitations)
-    lines.extend(
-        ["", "이 결과는 근거 기반 사전점검 자료이며, 법적 허가·불허 또는 최종 설치 결정을 대신하지 않습니다."]
-    )
+        lines.extend(["", f"참고: {str(limitations[0]).strip()}"])
+    lines.extend(["", "※ 사전점검 참고자료이며 허가·불허를 확정하지 않습니다."])
     return "\n".join(lines)
 
 
@@ -645,6 +728,7 @@ class ClaudeAnswerGenerator:
             detail = "response_truncated" if self.last_stop_reason == "max_tokens" else "invalid_json"
             self.last_status = {"mode": "deterministic", "detail": detail, "response": (raw or "")[-200:]}
             return self.fallback.generate(pack)
+        structured = _compact_structured(structured)
         problems = self._validate(structured, prompt_pack, pack)
         if problems:
             self.last_status = {"mode": "deterministic", "detail": "guard_rejected", "problems": problems}

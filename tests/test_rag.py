@@ -7,7 +7,9 @@ from pathlib import Path
 from lucera.answer import (
     ClaudeAnswerGenerator,
     _collect_allowed_numbers,
+    _compact_structured,
     _extract_json,
+    _render,
     _unverified_numbers,
     build_prompt_pack,
 )
@@ -101,6 +103,9 @@ class RagTests(unittest.TestCase):
         self.assertTrue(all(item["source"]["data_origin"] == "synthetic" for item in result["analysis"]["rule_analysis"]["checks"] if item["rule_id"].startswith("synthetic-")))
         self.assertTrue(result["grounding"]["citation_required"])
         self.assertIn("배수", result["answer"])
+        self.assertIn("주거지 이격거리", result["answer"])
+        self.assertNotIn("확인된 처리 과정", result["answer"])
+        self.assertLess(len(result["answer"]), 600)
 
 
 class SitingRuleTests(unittest.TestCase):
@@ -230,6 +235,26 @@ class AnswerGuardTests(unittest.TestCase):
         self.assertEqual(_extract_json('```json\n{"a": 1}\n```'), {"a": 1})
         self.assertEqual(_extract_json('설명입니다.\n{"a": {"b": "}"}}\n끝'), {"a": {"b": "}"}})
         self.assertIsNone(_extract_json("json이 없습니다"))
+
+    def test_claude_report_is_compacted_before_rendering(self) -> None:
+        structured = {
+            "conclusion_sentence": "설치 재검토 필요",
+            "reasons": [
+                {"title": f"항목 {index}", "body": "확인된 내용입니다. 현장 확인이 필요합니다. 반복 문장입니다.", "evidence_ids": ["r1"]}
+                for index in range(6)
+            ],
+            "map_observations": [{"observation": "주변에 주택이 보입니다.", "relevance": "배치 확인"}] * 3,
+            "checklist": ["현장 확인"] * 6,
+            "limitations": ["참고자료입니다.", "또 다른 한계입니다."],
+        }
+        compact = _compact_structured(structured)
+        rendered = _render(compact, self._pack())
+        self.assertEqual(len(compact["reasons"]), 5)
+        self.assertEqual(len(compact["map_observations"]), 2)
+        self.assertEqual(len(compact["checklist"]), 1)
+        self.assertEqual(len(compact["limitations"]), 1)
+        self.assertNotIn("r1", rendered)
+        self.assertLess(len(rendered), 1200)
 
 
 class MapContextTests(unittest.TestCase):

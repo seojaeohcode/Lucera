@@ -16,7 +16,7 @@ from collections import Counter, defaultdict
 from datetime import date
 from typing import Any, Iterable
 
-from .answer import ClaudeAnswerGenerator
+from .answer import MAX_REASONS, ClaudeAnswerGenerator, _short_body
 import config
 
 from .location import Location, normalize_address
@@ -929,7 +929,11 @@ def _reason_cards(
     permit_analysis: dict[str, Any],
 ) -> list[dict[str, Any]]:
     cards: list[dict[str, Any]] = []
-    for check in rule_analysis["checks"]:
+    rule_checks = sorted(
+        rule_analysis["checks"],
+        key=lambda check: 0 if check["status"] == "fail" else 1,
+    )
+    for check in rule_checks:
         if check["status"] not in {"fail", "check_required"}:
             continue
         cards.append(
@@ -951,7 +955,18 @@ def _reason_cards(
             code = issue.get("issue_code")
             if code:
                 issue_results[str(code)].append(result)
-    for code, items in sorted(issue_results.items(), key=lambda pair: (-len(pair[1]), pair[0])):
+    issue_priority = {
+        "safety_environment": 0,
+        "communication_procedure": 1,
+        "agricultural_land_damage": 2,
+        "landscape_damage": 3,
+        "glare_reflection": 4,
+        "noise_living_discomfort": 5,
+    }
+    for code, items in sorted(
+        issue_results.items(),
+        key=lambda pair: (issue_priority.get(pair[0], 99), -len(pair[1]), pair[0]),
+    ):
         unique_cases = {((item.get("case") or {}).get("case_id")) for item in items}
         unique_cases.discard(None)
         label = ISSUE_LABELS.get(code, code)
@@ -1046,42 +1061,63 @@ def _timeline(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
+def _format_local_number(value: Any) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{number:,.0f}" if number.is_integer() else f"{number:g}"
+
+
+def _local_reason_text(reason: dict[str, Any]) -> tuple[str, str]:
+    title = str(reason.get("title") or reason.get("category") or "검토 항목").replace("(합성)", "").strip()
+    evidence = (reason.get("evidence") or [])
+    check = evidence[0] if evidence and isinstance(evidence[0], dict) else {}
+    if reason.get("category") == "입지·규칙" and check:
+        observed = check.get("observed_value")
+        threshold = check.get("threshold_value")
+        unit = str(check.get("unit") or "")
+        if check.get("status") == "fail" and observed is not None and threshold is not None:
+            return title, f"{_format_local_number(observed)}{unit}로 기준 {_format_local_number(threshold)}{unit} 미충족."
+        if "비교 기준" in title or "원장" in str(reason.get("statement") or ""):
+            return title, "지역 허가 원장 비교자료가 부족해 확인 필요."
+    issue_match = re.search(r"관련 기록\s*(\d+)건,\s*사건\s*(\d+)건", str(reason.get("statement") or ""))
+    if issue_match:
+        title = re.sub(r"\s*관련 기록\s*(?:반복 확인|확인)$", "", title).strip()
+        return title, f"관련 기록 {issue_match.group(1)}건·사건 {issue_match.group(2)}건 확인."
+    return title, _short_body(reason.get("statement"), 180)
+
+
 class LocalAnswerGenerator:
-    """Deterministic answer generator used until an AI API is supplied."""
+    """Short deterministic fallback with the same shape as the Claude answer."""
 
     def generate(self, pack: dict[str, Any]) -> str:
         analysis = pack["analysis"]
         conclusion = analysis["conclusion_label"]
-        address = pack["input"]["address"]
-        lines = [f"{address} 설치 예정지 사전점검 결과: {conclusion}"]
-        reasons = analysis.get("reason_cards", [])[:5]
+        lines = ["결론", conclusion]
+        reasons = analysis.get("reason_cards", [])[:MAX_REASONS]
         if reasons:
-            lines.append("\n주요 판단 재료:")
-            for index, reason in enumerate(reasons, 1):
-                lines.append(f"{index}. {reason['statement']}")
-                if reason.get("next_check"):
-                    lines.append(f"   다음 확인: {reason['next_check']}")
+            lines.extend(["", "핵심 근거"])
+            for reason in reasons:
+                title, statement = _local_reason_text(reason)
+                if statement:
+                    lines.append(f"- {title}: {statement}")
         else:
-            lines.append("\n현재 검색 범위에서 주요 쟁점 근거가 확인되지 않았습니다.")
-        if analysis.get("timeline"):
-            labels = []
-            for event in analysis["timeline"][:6]:
-                value = event["label"]
-                if event.get("outcome"):
-                    value += f"({event['outcome']})"
-                labels.append(value)
-            lines.append("\n확인된 처리 과정: " + " → ".join(labels))
-        permit = analysis.get("permit_analysis") or {}
-        if permit.get("count"):
-            rate = permit.get("operation_rate")
-            rate_text = f", 사업개시·운영 {rate * 100:.1f}%" if rate is not None else ""
-            lines.append(
-                f"\n주변 기존 사업: {permit['count']}건, 총 {permit.get('total_capacity_kw', 0):,.0f}kW{rate_text}"
-            )
+            lines.append("\n핵심 근거가 충분히 확인되지 않았습니다.")
+        checks = []
+        for reason in reasons:
+            item = _short_body(reason.get("next_check"), 110)
+            if item == "공식 기준·현장 조건·입력값을 담당자가 확인":
+                item = "주거지·도로 이격거리와 현장 조건 확인"
+            if item and item not in checks:
+                checks.append(item)
+        if checks:
+            lines.extend(["", "다음 확인"])
+            lines.extend(f"- {item}" for item in checks[:4])
         limitations = analysis.get("limitations", [])
         if limitations:
-            lines.append("\n확인 한계: " + " / ".join(limitations[:3]))
-        lines.append("\n이 결과는 근거 기반 사전점검 자료이며, 법적 허가·불허 또는 최종 설치 결정을 대신하지 않습니다.")
+            lines.extend(["", f"참고: {_short_body(limitations[0], 140)}"])
+        lines.extend(["", "※ 사전점검 참고자료이며 허가·불허를 확정하지 않습니다."])
         return "\n".join(lines)
 
 
