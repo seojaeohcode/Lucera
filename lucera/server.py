@@ -12,7 +12,14 @@ import config
 
 from .answer import resolve_api_key
 from .db import LuceraDB
-from .complaints import continue_conversation, create_complaint, get_conversation, yeongam_area_detail, yeongam_pins
+from .complaints import (
+    continue_conversation,
+    create_complaint,
+    get_conversation,
+    yeongam_area_detail,
+    yeongam_permit_context,
+    yeongam_pins,
+)
 from .ingest import ingest_clik
 from .projects import create_project, get_precheck, get_project
 from .regions import parent_region_catalog, region_catalog
@@ -140,6 +147,22 @@ class LuceraHandler(BaseHTTPRequestHandler):
             with self.db.lock:
                 timeline = RAGService(self.db).case_timeline(parts[2])
             self._json(timeline or {"error": "case_not_found"}, 200 if timeline else 404)
+            return
+        if len(parts) == 4 and parts[:2] == ["v1", "permits"] and parts[3] == "context":
+            with self.db.lock:
+                context = yeongam_permit_context(self.db, parts[2])
+                if context and context.get("latitude") is not None and context.get("longitude") is not None:
+                    fetched = VWorldClient().site_context(float(context["latitude"]), float(context["longitude"]))
+                    context["map_context"] = {
+                        **fetched,
+                        "images": [
+                            {**image, "url": f"/v1/map-image/{image['cache_key']}"}
+                            for image in fetched.get("images", [])
+                        ],
+                    }
+                    for image in context["map_context"].get("images", []):
+                        image.pop("path", None)
+            self._json(context or {"error": "permit_not_found"}, 200 if context else 404)
             return
         self._json({"error": "not_found"}, 404)
 

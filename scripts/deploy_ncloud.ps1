@@ -68,7 +68,10 @@ try {
             "deploy",
             "scripts",
             "config.py",
-            "data/reference/gazetteer"
+            "data/reference/gazetteer",
+            "data/reference/yeongam_solar_permits_20260301.csv",
+            "data/reference/yeongam_solar_geocoded_20260301.json",
+            "data/reference/minutes_corpus.json"
         )
     }
 
@@ -80,7 +83,7 @@ try {
         $remoteInstallCommand = "systemctl restart lucera && systemctl reload nginx && for attempt in `$(seq 1 30); do curl --fail --silent --show-error http://127.0.0.1/health && exit 0; sleep 2; done; exit 1"
     }
     else {
-        $remoteInstallCommand = "systemctl stop lucera 2>/dev/null || true; tar -xzf /tmp/lucera-runtime.tgz -C /opt/lucera; bash /opt/lucera/deploy/bootstrap.sh; python3 /opt/lucera/scripts/rebuild_demo_db.py --db /opt/lucera/data/db/lucera_minutes.sqlite3 --replace; chown -R lucera:lucera /opt/lucera/data; systemctl restart lucera; systemctl reload nginx; for attempt in `$(seq 1 30); do curl --fail --silent --show-error http://127.0.0.1/health && rm -f /tmp/lucera-runtime.tgz && exit 0; sleep 2; done; exit 1"
+        $remoteInstallCommand = "systemctl stop lucera 2>/dev/null || true; tar -xzf /tmp/lucera-runtime.tgz -C /opt/lucera; bash /opt/lucera/deploy/bootstrap.sh; python3 /opt/lucera/scripts/rebuild_yeongam_real_db.py --db /opt/lucera/data/db/lucera_minutes.sqlite3 --replace --map-sample-per-ri 6 --geocode-workers 12; chown -R lucera:lucera /opt/lucera/data; systemctl restart lucera; systemctl reload nginx; for attempt in `$(seq 1 30); do curl --fail --silent --show-error http://127.0.0.1/health && rm -f /tmp/lucera-runtime.tgz && exit 0; sleep 2; done; exit 1"
     }
     Invoke-Checked $plink ($commonOptions + @($remote, $remoteInstallCommand))
     Invoke-Checked $plink ($commonOptions + @($remote, "curl --fail --silent --show-error http://127.0.0.1/health"))

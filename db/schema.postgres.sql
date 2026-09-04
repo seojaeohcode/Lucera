@@ -873,6 +873,25 @@ CREATE TABLE IF NOT EXISTS project_place_link (
     PRIMARY KEY(project_id, place_id, relation_type)
 );
 
+CREATE TABLE IF NOT EXISTS permit_meeting_link (
+    link_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id uuid NOT NULL REFERENCES permit_project(project_id) ON DELETE CASCADE,
+    document_id uuid NOT NULL REFERENCES source_document(document_id) ON DELETE CASCADE,
+    meeting_id uuid REFERENCES meeting(meeting_id) ON DELETE CASCADE,
+    segment_id uuid REFERENCES meeting_segment(segment_id) ON DELETE CASCADE,
+    relation_type text NOT NULL,
+    match_score numeric NOT NULL,
+    issue_codes jsonb NOT NULL DEFAULT '[]'::jsonb,
+    link_reason text NOT NULL,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    UNIQUE(project_id, segment_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_permit_meeting_project
+    ON permit_meeting_link(project_id, match_score DESC);
+CREATE INDEX IF NOT EXISTS idx_permit_meeting_segment
+    ON permit_meeting_link(segment_id);
+
 CREATE TABLE IF NOT EXISTS address_lookup (
     address_lookup_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     raw_query text NOT NULL,

@@ -889,13 +889,20 @@ def _load_permit_projects(db: Any, data: dict[str, Any], location: Location) -> 
         and not any(term in str(item.get("operation_status") or "") for term in NON_OPERATING_STATUS_TERMS)
     ]
     total_capacity = sum(float(item.get("capacity_kw") or 0) for item in projects)
+    origins = {str(item.get("metadata", {}).get("data_origin") or "permit_project") for item in projects}
+    if origins == {"public_dataset"}:
+        data_origin = "public_dataset"
+    elif origins == {"synthetic"}:
+        data_origin = "synthetic"
+    else:
+        data_origin = "mixed" if len(origins) > 1 else next(iter(origins), "permit_project")
     return {
         "count": len(projects),
         "total_capacity_kw": round(total_capacity, 2),
         "operating_count": len(operating),
         "operation_rate": round(len(operating) / len(projects), 4) if projects else None,
         "distance_search_used": any(item["distance_status"] == "exact" for item in projects),
-        "data_origin": "synthetic" if projects and all(item.get("metadata", {}).get("data_origin") == "synthetic" for item in projects) else "permit_project",
+        "data_origin": data_origin,
         "projects": projects[:30],
     }
 
@@ -1326,7 +1333,7 @@ class RAGService:
                 pack["answer_structured"] = status.get("structured")
         for image in pack["map_context"].get("images") or []:
             image.pop("path", None)
-        pack["notice"] = "합성·공개 기록 기반의 사전점검입니다. 법적 허가·불허 또는 설치 결정을 자동 확정하지 않습니다."
+        pack["notice"] = "영암군 공개 허가 원장·실제 회의록 기반의 사전점검입니다. 법적 허가·불허 또는 설치 결정을 자동 확정하지 않습니다."
         return pack
 
     def case_timeline(self, case_id: str) -> dict[str, Any] | None:

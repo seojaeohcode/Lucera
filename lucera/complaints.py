@@ -243,8 +243,14 @@ def _safe_json(value: Any, fallback: Any) -> Any:
         return fallback
 
 
-def _area_summary(pins: list[dict[str, Any]], area: str) -> dict[str, Any]:
-    selected = pins if area == "영암군 전체" else [pin for pin in pins if pin.get("eup_myeon") == area]
+def _area_summary(pins: list[dict[str, Any]], area: str, ri: str | None = None) -> dict[str, Any]:
+    if area == "영암군 전체" and ri is None:
+        selected = pins
+    else:
+        selected = [
+            pin for pin in pins
+            if pin.get("eup_myeon") == area and (ri is None or pin.get("ri") == ri)
+        ]
     permits = [pin for pin in selected if pin.get("kind") == "permit"]
     complaints = [pin for pin in selected if pin.get("kind") == "complaint"]
     issue_counts: dict[str, int] = {}
@@ -262,7 +268,9 @@ def _area_summary(pins: list[dict[str, Any]], area: str) -> dict[str, Any]:
         status = str(pin.get("status") or "상태 미상")
         status_counts[status] = status_counts.get(status, 0) + 1
     return {
-        "area": area,
+        "area": f"{area} {ri}" if ri else area,
+        "parent_area": area if ri else None,
+        "ri": ri,
         "pin_count": len(selected),
         "permit_count": len(permits),
         "complaint_count": len(complaints),
@@ -275,7 +283,10 @@ def _area_summary(pins: list[dict[str, Any]], area: str) -> dict[str, Any]:
             "latitude": round(sum(item[0] for item in coordinates) / len(coordinates), 6) if coordinates else None,
             "longitude": round(sum(item[1] for item in coordinates) / len(coordinates), 6) if coordinates else None,
         },
-        "notice": "합성 참고 사업과 사용자가 접수한 영암군 민원을 읍·면 단위로 묶은 화면용 요약입니다.",
+        "notice": (
+            "공개 허가 원장 대표 표본과 사용자가 접수한 영암군 민원을 리 단위로 묶은 화면용 요약입니다."
+            if ri else "공개 허가 원장 대표 표본과 사용자가 접수한 영암군 민원을 읍·면 단위로 묶은 화면용 요약입니다."
+        ),
     }
 
 
@@ -298,9 +309,13 @@ def yeongam_pins(db: LuceraDB) -> dict[str, Any]:
                   COALESCE(jibun_address, road_address) AS address, latitude,
                   longitude, operation_status AS status, company_name AS company,
                   capacity_kw, province, city_county, eup_myeon, ri,
-                  metadata_json AS metadata, permit_date AS created_at, 'synthetic' AS data_origin
+                  metadata_json AS metadata,
+                  COALESCE(permit_date, json_extract(metadata_json, '$.install_year') || '-01-01') AS created_at,
+                  COALESCE(json_extract(metadata_json, '$.data_origin'), 'permit_register') AS data_origin,
+                  (SELECT COUNT(*) FROM permit_meeting_link pml WHERE pml.project_id=permit_project.project_id) AS meeting_evidence_count
            FROM permit_project
            WHERE city_county='영암군' AND latitude IS NOT NULL AND longitude IS NOT NULL
+             AND COALESCE(json_extract(metadata_json, '$.map_display'), 1)=1
            ORDER BY permit_date DESC"""
     ).fetchall():
         item = dict(row)
@@ -317,13 +332,45 @@ def yeongam_pins(db: LuceraDB) -> dict[str, Any]:
     ordered_areas = [area for area in YEONGAM_AREA_ORDER if area in known_areas]
     ordered_areas.extend(sorted(known_areas - set(ordered_areas)))
     areas.extend(_area_summary(pins, area) for area in ordered_areas)
+    ri_areas: list[dict[str, Any]] = []
+    for area in ordered_areas:
+        known_ris = sorted({
+            str(pin.get("ri"))
+            for pin in pins
+            if pin.get("eup_myeon") == area and pin.get("ri")
+        })
+        ri_areas.extend(_area_summary(pins, area, ri) for ri in known_ris)
+    permit_register_count = db.conn.execute(
+        "SELECT COUNT(*) FROM permit_project WHERE city_county='영암군'"
+    ).fetchone()[0]
+    coordinates = [
+        (float(pin["latitude"]), float(pin["longitude"]))
+        for pin in pins
+        if pin.get("latitude") is not None and pin.get("longitude") is not None
+    ]
+    if coordinates:
+        latitudes = [item[0] for item in coordinates]
+        longitudes = [item[1] for item in coordinates]
+        bounds = {
+            "west": round(min(longitudes) - 0.015, 6),
+            "east": round(max(longitudes) + 0.015, 6),
+            "south": round(min(latitudes) - 0.012, 6),
+            "north": round(max(latitudes) + 0.012, 6),
+        }
+    else:
+        bounds = {"west": 126.32, "east": 126.86, "south": 34.61, "north": 34.96}
     return {
         "scope": "yeongam",
         "county": YEONGAM_COUNTY,
         "pins": pins,
         "count": len(pins),
+        "permit_register_count": permit_register_count,
+        "map_pin_count": len(pins),
+        "map_sampling": {"enabled": True, "note": "공식 원장 전체는 DB에 보존하고 리별 5~7건 대표 표본만 지도에 표시"},
         "areas": areas,
-        "notice": "영암군만 표시합니다. 지도 핀과 지역 요약은 합성 데이터 또는 사용자가 접수한 데이터입니다.",
+        "ri_areas": ri_areas,
+        "bounds": bounds,
+        "notice": "영암군만 표시합니다. 공식 허가 원장 전체는 DB에 보존하고 리별 5~7건 대표 사례만 지도에 표시합니다. 좌표는 원장 지번 주소를 지오코딩한 결과입니다.",
     }
 
 
@@ -339,5 +386,50 @@ def yeongam_area_detail(db: LuceraDB, area: str) -> dict[str, Any] | None:
         "area": area,
         "summary": summary,
         "pins": pins,
+        "ri_areas": payload["ri_areas"],
         "notice": payload["notice"],
     }
+
+
+def yeongam_permit_context(db: LuceraDB, project_id: str) -> dict[str, Any] | None:
+    """Return one real permit with its linked meeting paragraphs.
+
+    The endpoint is used by the map UI when a user selects a dense pin.  It
+    exposes the evidence relationship explicitly instead of making the UI
+    infer it from a free-text summary.
+    """
+
+    row = db.conn.execute(
+        """SELECT project_id, facility_name, capacity_kw, operation_status,
+                  jibun_address, province, city_county, eup_myeon, ri,
+                  latitude, longitude, location_status, metadata_json
+             FROM permit_project
+            WHERE project_id=? AND city_county='영암군'""",
+        (project_id,),
+    ).fetchone()
+    if not row:
+        return None
+    permit = dict(row)
+    permit["metadata"] = _safe_json(permit.pop("metadata_json"), {})
+    evidence_rows = db.conn.execute(
+        """SELECT pml.relation_type, pml.match_score, pml.issue_codes_json,
+                  pml.link_reason, s.segment_id, s.page_from, s.text_original,
+                  m.meeting_id, m.meeting_title, m.meeting_date,
+                  d.source_url
+             FROM permit_meeting_link pml
+             JOIN meeting_segment s ON s.segment_id=pml.segment_id
+             JOIN meeting m ON m.meeting_id=pml.meeting_id
+             JOIN source_document d ON d.document_id=pml.document_id
+            WHERE pml.project_id=?
+            ORDER BY pml.match_score DESC, m.meeting_date DESC
+            LIMIT 12""",
+        (project_id,),
+    ).fetchall()
+    evidence = []
+    for item in evidence_rows:
+        value = dict(item)
+        value["issue_codes"] = _safe_json(value.pop("issue_codes_json"), [])
+        evidence.append(value)
+    permit["meeting_evidence"] = evidence
+    permit["meeting_evidence_count"] = len(evidence)
+    return permit

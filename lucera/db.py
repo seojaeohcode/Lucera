@@ -1162,6 +1162,7 @@ class LuceraDB:
             "segment_issue",
             "siting_rule",
             "permit_project",
+            "permit_meeting_link",
             "project_intake",
             "project_field_definition",
             "project_intake_submission",

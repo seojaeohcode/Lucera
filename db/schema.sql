@@ -889,6 +889,29 @@ CREATE TABLE IF NOT EXISTS project_place_link (
     PRIMARY KEY(project_id, place_id, relation_type)
 );
 
+-- A real permit row is linked to the real Yeongam meeting paragraphs that
+-- discuss the same ri/eup-myeon or the county-wide solar context.  This is
+-- deliberately separate from project_case_link: permit_project is an
+-- external register, while project_case_link belongs to user applications.
+CREATE TABLE IF NOT EXISTS permit_meeting_link (
+    link_id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES permit_project(project_id) ON DELETE CASCADE,
+    document_id TEXT NOT NULL REFERENCES source_document(document_id) ON DELETE CASCADE,
+    meeting_id TEXT REFERENCES meeting(meeting_id) ON DELETE CASCADE,
+    segment_id TEXT REFERENCES meeting_segment(segment_id) ON DELETE CASCADE,
+    relation_type TEXT NOT NULL,
+    match_score REAL NOT NULL,
+    issue_codes_json TEXT NOT NULL DEFAULT '[]',
+    link_reason TEXT NOT NULL,
+    metadata_json TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(project_id, segment_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_permit_meeting_project
+    ON permit_meeting_link(project_id, match_score DESC);
+CREATE INDEX IF NOT EXISTS idx_permit_meeting_segment
+    ON permit_meeting_link(segment_id);
+
 CREATE TABLE IF NOT EXISTS address_lookup (
     address_lookup_id TEXT PRIMARY KEY,
     raw_query TEXT NOT NULL,

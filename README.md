@@ -6,11 +6,11 @@
 
 1. **민원 접수** — 영암군 주소와 민원 원문을 입력합니다. 좌표를 직접 주거나 주소 검색으로 지오코딩합니다.
 2. **AI 분석·저장** — `complaint_submission`에 원문·주소·좌표·쟁점을 저장하고, 검색 근거를 `complaint_evidence`로 연결합니다.
-3. **영암 전용 지도** — `/v1/map/pins`가 합성 참고 사업과 사용자가 방금 접수한 민원을 핀으로 표시합니다. 화면의 지도는 영암군 범위만 노출합니다.
+3. **영암 전용 지도** — `/v1/map/pins`가 공식 허가 원장에서 고른 실제 대표 핀과 사용자가 방금 접수한 민원을 표시합니다. 화면의 지도는 영암군 범위만 노출합니다.
 4. **다음** — 저장된 주소·좌표를 유지한 채 대화 단계로 진입합니다.
 5. **연속·멀티모달 대화** — `chat_conversation`과 `chat_message`에 문맥을 누적하며, 추가 질문과 PNG/JPEG/WEBP/GIF 현장 이미지를 함께 받을 수 있습니다. Claude 키가 없으면 동일한 근거팩을 결정론적 답변기로 처리합니다.
 
-화면에서 1·2·3단계를 항상 확인할 수 있고, 잠긴 단계는 앞 단계가 끝나면 열립니다. 합성 데이터는 실제 민원이나 허가 사실이 아닙니다.
+화면에서 1·2·3단계를 항상 확인할 수 있고, 잠긴 단계는 앞 단계가 끝나면 열립니다. 공식 허가 원장 전체는 DB에 보존하되, 지도는 리별 실제 대표 사례를 5~7건 정도 표시해 발표 화면의 밀도를 유지합니다. 회의록은 영암군 실제 문서 12건과 136개 문단을 사용합니다.
 
 ## 빠른 실행
 
@@ -18,18 +18,13 @@ Windows PowerShell에서 프로젝트 루트에서 실행합니다.
 
 ```powershell
 $py = 'C:\Python313\python.exe'
-& $py scripts\rebuild_demo_db.py --db data\db\lucera_minutes.sqlite3 --replace
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 6 --geocode-workers 12
 & $py -m lucera.cli serve --host 127.0.0.1 --port 8000
 ```
 
 브라우저에서 `http://127.0.0.1:8000`을 엽니다. UI의 **예시 다시 채우기**와 **민원 분석하고 좌표 저장**으로 첫 흐름을 재현할 수 있습니다.
 
-샘플 CLI 입력은 [chat-input.synthetic.json](chat-input.synthetic.json)입니다.
-발표 시나리오 3종은 [demo-scenarios.synthetic.json](demo-scenarios.synthetic.json)에서 확인할 수 있습니다.
-
-```powershell
-& $py -m lucera.cli chat --json-file .\chat-input.synthetic.json
-```
+테스트 fixture가 필요한 경우에만 `scripts\rebuild_demo_db.py`를 별도로 사용합니다. 발표용 실행은 위의 실데이터 DB 재구축 명령을 기준으로 합니다.
 
 ## 환경변수
 
@@ -55,7 +50,7 @@ CLIK_API_KEY=
 
 ```json
 {
-  "address": "전라남도 영암군 삼호읍 가상리 45-2",
+  "address": "전라남도 영암군 도포면 영호리 572-5",
   "text": "집중호우 때 배수로와 토사 유출이 걱정됩니다.",
   "latitude": 34.8,
   "longitude": 126.42,
@@ -92,20 +87,27 @@ CLIK_API_KEY=
 
 ## 데이터 재구축 원칙
 
-기존에 섞여 있던 더미·대용량 운영 DB를 배포하지 않습니다. [scripts/rebuild_demo_db.py](scripts/rebuild_demo_db.py)가 새 SQLite 파일을 만들고 다음만 적재합니다.
+실제 화면용 DB는 [scripts/rebuild_yeongam_real_db.py](scripts/rebuild_yeongam_real_db.py)가 새 SQLite 파일에 다음을 적재합니다.
 
-- 영암군 합성 회의록 6개와 연결된 문단·쟁점·처리 과정
-- 영암군 합성 이격거리 규칙 2개
-- 읍·면 10곳에 분산된 영암군 합성 참고 사업 16개
-- 빈 민원·대화 테이블
+- 공공데이터포털 영암군 태양광 허가정보 원장 1,549건
+- 원장 지번 주소에서 보정한 지도용 실제 좌표 표본(리별 최대 6건, 데이터가 적은 리는 있는 만큼)
+- 영암군 실제 회의록 12건·136개 문단·쟁점·처리 과정
+- 허가 사례와 회의록 문단의 읍·면·리·태양광 맥락 연결
 
-`--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다.
+지도 표본은 합성 데이터가 아니다. 원장 전체를 DB에 보존하고, 실제 주소를 지오코딩한 리별 대표 사례만 지도에 표시한다. 좌표에는 지오코더, 매칭 점수, 원 주소, 처리 상태를 함께 저장한다.
+
+```powershell
+& $py scripts\rebuild_yeongam_real_db.py --db data\db\lucera_minutes.sqlite3 --replace --map-sample-per-ri 6 --geocode-workers 12
+```
+
+`--replace`는 기존 파일과 `-wal`, `-shm`을 `data/db/backups/`에 남긴 뒤 새 파일을 원자적으로 교체합니다. 서버도 이 방식으로 재생성하므로 라이브 WAL을 압축파일로 덮어쓰지 않습니다. `--map-sample-per-ri 0`을 지정할 때만 공식 원장 전체를 지오코딩합니다.
 
 ## 구조
 
 ```text
 lucera/
   complaints.py   # 민원 저장, 대화, 영암 핀
+  real_data.py    # 영암 공식 허가 원장·회의록 재구축
   rag.py           # 검색·규칙·근거팩·답변 연결
   search.py        # 위치/근거 검색
   answer.py        # Claude + 결정론적 fallback + 가드
@@ -134,4 +136,4 @@ Terraform 인프라는 `infra/ncloud/`에 있고, 배포 스크립트는 Terrafo
 & .\scripts\deploy_ncloud.ps1
 ```
 
-배포는 코드·스키마·재생성 스크립트만 업로드하고, 서버에서 서비스를 멈춘 뒤 영암 합성 DB를 새로 생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
+배포는 코드·스키마·실제 원장·재생성 스크립트를 업로드하고, 서버에서 서비스를 멈춘 뒤 `rebuild_yeongam_real_db.py --map-sample-per-ri 6`으로 실제 영암 DB를 재생성하고 `systemctl restart lucera` 후 `/health`를 확인합니다. 기존 DB는 서버의 `/opt/lucera/data/db/backups/`에 보존됩니다.
