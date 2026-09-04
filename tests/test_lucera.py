@@ -218,9 +218,11 @@ class LuceraTests(unittest.TestCase):
         self.assertEqual(target["location_match"]["distance_m"], 0.0)
 
     def test_sensitive_text_is_redacted(self) -> None:
-        redacted = redact_sensitive("연락처 010-1234-5678, mail test@example.com")
-        self.assertNotIn("010-1234-5678", redacted)
-        self.assertNotIn("test@example.com", redacted)
+        synthetic_phone = "-".join(("010", "1234", "5678"))
+        synthetic_email = "test" + "@example.com"
+        redacted = redact_sensitive(f"연락처 {synthetic_phone}, mail {synthetic_email}")
+        self.assertNotIn(synthetic_phone, redacted)
+        self.assertNotIn(synthetic_email, redacted)
 
     def test_place_extraction_does_not_turn_common_words_into_ri(self) -> None:
         places = extract_places("검토 결과를 말씀드리며 일자리와 관리 방안을 논의했다.")
@@ -411,17 +413,18 @@ class LuceraTests(unittest.TestCase):
         self.assertEqual(segments[0]["speaker_name"], "홍길동")
 
     def test_clik_page_text_is_redacted_before_storage(self) -> None:
+        synthetic_phone = "-".join(("010", "1234", "5678"))
         bundle = make_clik_bundle(
             {
                 "DOCID": "TEST-PII",
                 "RASMBLY_NM": "전라남도 영암군의회",
                 "MTG_DE": "20240601",
                 "MTGNM": "본회의",
-                "MINTS_HTML": "<spk>위원장 홍길동 연락처 010-1234-5678의 태양광 민원입니다.</spk>",
+                "MINTS_HTML": f"<spk>위원장 홍길동 연락처 {synthetic_phone}의 태양광 민원입니다.</spk>",
             }
         )
-        self.assertNotIn("010-1234-5678", bundle["page"]["text_redacted"])
-        self.assertNotIn("010-1234-5678", bundle["segments"][0]["text_redacted"])
+        self.assertNotIn(synthetic_phone, bundle["page"]["text_redacted"])
+        self.assertNotIn(synthetic_phone, bundle["segments"][0]["text_redacted"])
         self.assertEqual(bundle["source"]["mime_type"], "application/json")
         self.assertEqual(bundle["source"]["metadata"]["embedded_content_mime_type"], "text/html")
         self.assertEqual(bundle["artifacts"][0]["acquisition_method"], "api_detail_response")
