@@ -236,7 +236,7 @@
     .legend-dot.teal { background: var(--water-deep); }
     .pin-detail { min-height: 75px; margin-top: 13px; padding: 12px; border-radius: 13px; color: #466b63; background: rgba(255, 251, 242, .78); font-size: 12px; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-    @media (max-width: 920px) { .hero, .workspace, .workspace.page-map { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
+    @media (max-width: 760px) { .hero, .workspace, .workspace.page-map { grid-template-columns: 1fr; } .map-sticky { position: static; order: -1; } .map-canvas { aspect-ratio: 1.55; } }
      @media (max-width: 760px) { .case-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .case-card:last-child { grid-column: 1 / -1; } }
      @media (max-width: 560px) { .shell { width: min(100% - 24px, 1240px); } .hero { padding-top: 35px; } .step { padding: 21px; border-radius: 20px; } .form-grid, .result-grid, .details-grid { grid-template-columns: 1fr; } .field.full { grid-column: auto; } #step-1 .step-header { padding: 21px 21px 18px; } #step-1 .step-body { padding: 18px 21px 0; } #step-1 .intake-assist-row { grid-template-columns: 1fr; } #complaint-form > .actions { margin-left: -21px; margin-right: -21px; padding-left: 21px; padding-right: 21px; } .intake-assist .button { width: 100%; } h1 { font-size: 43px; } .selected-address { align-items: start; flex-direction: column; } .selected-address strong { text-align: left; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
@@ -350,7 +350,7 @@
     .analysis-evidence .evidence-item small { margin-top: 5px; }
     .analysis-note { margin-top: 10px; color: #7a8a82; font-size: 10px; line-height: 1.5; }
     @media (max-width: 700px) { .analysis-reasons { grid-template-columns: 1fr; } }
-    @media (min-width: 921px) {
+    @media (min-width: 761px) {
       .shell { width: min(1480px, calc(100% - 36px)); }
       .workspace.page-map { grid-template-columns: minmax(0, 1.14fr) minmax(480px, .86fr); }
       .workspace.page-map .flow, .workspace.page-map .step, .workspace.page-map .map-sticky { min-width: 0; width: 100%; }
