@@ -729,6 +729,9 @@ class ClaudeAnswerGenerator:
             self.last_status = {"mode": "deterministic", "detail": detail, "response": (raw or "")[-200:]}
             return self.fallback.generate(pack)
         structured = _compact_structured(structured)
+        conclusion_label = (pack.get("analysis") or {}).get("conclusion_label")
+        if conclusion_label:
+            structured["conclusion_sentence"] = _clip_text(conclusion_label, 90)
         problems = self._validate(structured, prompt_pack, pack)
         if problems:
             self.last_status = {"mode": "deterministic", "detail": "guard_rejected", "problems": problems}
