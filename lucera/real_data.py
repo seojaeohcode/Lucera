@@ -553,6 +553,13 @@ def link_permits_to_minutes(db: LuceraDB, per_project: int = 12) -> int:
             ORDER BY m.meeting_date DESC, s.ordinal"""
     ).fetchall()
     inserted = 0
+    evidence_signal_terms = (
+        "허가", "인허가", "개발행위", "이격거리", "민원", "반대", "반발",
+        "갈등", "주민협의", "주민동의", "의견수렴", "주민수용성", "훼손",
+        "피해", "우려", "간척지", "염해", "계통", "변전소", "송전", "선로",
+        "미추진", "지연",
+    )
+    admin_only_terms = ("예산", "계상", "주택지원", "융복합 지원사업", "보급 주택")
     for permit in permits:
         ranked: list[tuple[float, str, Any, list[str]]] = []
         area = str(permit["eup_myeon"] or "")
@@ -562,7 +569,14 @@ def link_permits_to_minutes(db: LuceraDB, per_project: int = 12) -> int:
             area_hit = bool(area and area in text)
             ri_hit = bool(ri and ri in text)
             solar_hit = any(term in text for term in ("태양광", "태양광발전", "발전소", "간척지"))
-            if not solar_hit:
+            signal_hit = any(term in text for term in evidence_signal_terms)
+            if not solar_hit or not signal_hit:
+                continue
+            # A public-energy budget/program paragraph is not a permit or
+            # dispute connection without a concrete local issue signal.
+            if any(term in text for term in admin_only_terms) and not any(
+                term in text for term in ("허가", "민원", "반대", "갈등", "간척지", "계통", "변전소")
+            ):
                 continue
             if ri_hit:
                 score, relation, reason = 1.0, "same_ri", "회의록에 동일 리가 직접 언급됨"

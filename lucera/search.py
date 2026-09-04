@@ -112,10 +112,18 @@ def _contextual_snippet(text: str, keywords: list[str], max_chars: int = 360) ->
     segment and making an unrelated sentence look like evidence.
     """
 
-    value = " ".join((text or "").split())
+    raw = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    # OCR minutes often use line breaks instead of sentence punctuation. Keep
+    # those boundaries until after selecting the relevant passage; collapsing
+    # first made an unrelated budget sentence look like evidence.
+    sentences = [
+        re.sub(r"\s+", " ", part).strip()
+        for part in re.split(r"(?<=[.!?。！？])(?:\s+|\n+)|\n+", raw)
+        if part.strip()
+    ]
+    value = " ".join(sentences)
     if not value:
         return ""
-    sentences = [part.strip() for part in re.split(r"(?<=[.!?。！？])\s+", value) if part.strip()]
     if len(sentences) <= 1:
         return _snippet(value, keywords, max_chars)
 
@@ -155,12 +163,11 @@ def _contextual_snippet(text: str, keywords: list[str], max_chars: int = 360) ->
 
 
 def _dedupe_and_diversify(results: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
-    """Remove mirrored source paragraphs and cap one meeting's dominance."""
+    """Remove mirrored source paragraphs and keep one paragraph per meeting."""
 
     unique: list[dict[str, Any]] = []
     seen_text: set[str] = set()
     meeting_counts: defaultdict[tuple[str, str], int] = defaultdict(int)
-    deferred: list[dict[str, Any]] = []
     for item in results:
         text_key = " ".join(str(item.get("evidence_text") or "").split())
         if text_key and text_key in seen_text:
@@ -171,20 +178,12 @@ def _dedupe_and_diversify(results: list[dict[str, Any]], limit: int) -> list[dic
             str(item.get("meeting_date") or ""),
             " ".join(str(item.get("meeting_title") or item.get("title") or "").split()),
         )
-        if meeting_counts[meeting_key] >= 3:
-            deferred.append(item)
+        if meeting_counts[meeting_key] >= 1:
             continue
         meeting_counts[meeting_key] += 1
         unique.append(item)
         if len(unique) >= limit:
             return unique
-
-    # If the corpus has fewer than three distinct paragraphs per meeting, use
-    # any remaining non-duplicate records to fill the requested limit.
-    for item in deferred:
-        if len(unique) >= limit:
-            break
-        unique.append(item)
     return unique
 
 

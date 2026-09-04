@@ -16,6 +16,7 @@ from lucera.projects import create_project, get_precheck, get_project
 from lucera.regions import parent_region_catalog, region_catalog, region_for_name
 from lucera.review import rebuild_case_reviews
 from lucera.search import SearchService, _contextual_snippet
+from lucera.complaints import _permit_evidence_rank
 
 
 class LuceraTests(unittest.TestCase):
@@ -70,6 +71,29 @@ class LuceraTests(unittest.TestCase):
         )
         self.assertIn("이격거리 기준을 검토했다", snippet)
         self.assertNotIn("별도 행사 일정", snippet)
+
+    def test_contextual_snippet_handles_ocr_line_breaks(self) -> None:
+        snippet = _contextual_snippet(
+            "신재생에너지 주택지원 예산을 계상했다.\n태양광 발전사업의 주민 반발과 계통 접속 지연 대책을 논의했다.",
+            ["태양광", "주민", "계통", "지연"],
+        )
+        self.assertIn("주민 반발", snippet)
+        self.assertNotIn("주택지원 예산", snippet)
+
+    def test_permit_evidence_rejects_unrelated_budget_paragraph(self) -> None:
+        permit = {"eup_myeon": "영암읍", "ri": "중앙리"}
+        budget = {
+            "text_original": "신재생에너지 보급 주택지원 사업으로 가정용 3kW급 태양광을 지원하고 예산을 계상했다.",
+            "meeting_title": "영암군의회 경제건설위원회",
+            "issue_codes": [],
+        }
+        conflict = {
+            "text_original": "영암읍 태양광 발전사업 허가 과정에서 주민 반발과 계통 접속 지연 문제가 발생했다.",
+            "meeting_title": "영암군의회 경제건설위원회",
+            "issue_codes": ["communication_procedure", "grid_connection"],
+        }
+        self.assertIsNone(_permit_evidence_rank(budget, permit))
+        self.assertIsNotNone(_permit_evidence_rank(conflict, permit))
 
     def test_search_exposes_case_and_episode_identity(self) -> None:
         result = SearchService(self.db).search(

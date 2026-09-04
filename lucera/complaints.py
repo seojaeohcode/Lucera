@@ -12,6 +12,7 @@ from uuid import uuid4
 from .db import LuceraDB, stable_id
 from .location import normalize_address
 from .rag import RAGService
+from .search import ISSUE_SPECIFIC_TERMS, _contextual_snippet
 from .yeongam import YEONGAM_COUNTY, require_yeongam
 
 
@@ -21,6 +22,104 @@ def _now() -> str:
 
 def _json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+PERMIT_EVIDENCE_SOLAR_TERMS = (
+    "태양광",
+    "태양광발전",
+    "태양광발전시설",
+    "태양광발전소",
+    "발전용 태양광",
+    "주민참여형 태양광",
+    "간척지 태양광",
+)
+PERMIT_EVIDENCE_SIGNAL_TERMS = (
+    "허가",
+    "인허가",
+    "개발행위",
+    "이격거리",
+    "민원",
+    "반대",
+    "반발",
+    "갈등",
+    "주민협의",
+    "주민동의",
+    "의견수렴",
+    "주민수용성",
+    "훼손",
+    "피해",
+    "우려",
+    "간척지",
+    "염해",
+    "계통",
+    "변전소",
+    "송전",
+    "선로",
+    "미추진",
+    "지연",
+)
+PERMIT_EVIDENCE_ADMIN_ONLY_TERMS = (
+    "예산",
+    "계상",
+    "주택지원",
+    "융복합 지원사업",
+    "보급 주택",
+)
+
+
+def _permit_evidence_rank(item: dict[str, Any], permit: dict[str, Any]) -> dict[str, Any] | None:
+    """Score a meeting paragraph for a specific permit before it reaches the UI.
+
+    A permit is not evidence merely because the paragraph mentions solar power.
+    It must also contain a concrete permit/dispute/environment/grid signal or
+    name the permit's own administrative area. This keeps budget notices and
+    generic energy-program paragraphs out of the pin detail.
+    """
+
+    text = " ".join(str(item.get(key) or "") for key in ("text_original", "meeting_title"))
+    solar_hits = [term for term in PERMIT_EVIDENCE_SOLAR_TERMS if term in text]
+    if not solar_hits:
+        return None
+    signal_hits = [term for term in PERMIT_EVIDENCE_SIGNAL_TERMS if term in text]
+    area = str(permit.get("eup_myeon") or "").strip()
+    ri = str(permit.get("ri") or "").strip()
+    area_hits = [label for label in (area, ri) if label and label in text]
+    issue_codes = item.get("issue_codes") or []
+    issue_hits = [
+        term
+        for code in issue_codes
+        for term in ISSUE_SPECIFIC_TERMS.get(str(code), ())
+        if term in text
+    ]
+    admin_only = any(term in text for term in PERMIT_EVIDENCE_ADMIN_ONLY_TERMS)
+    # A generic program/budget paragraph is not a connection just because it
+    # contains the word 태양광. It needs a real issue signal or local place.
+    if not signal_hits and not area_hits:
+        return None
+    if admin_only and not issue_hits and not area_hits:
+        return None
+
+    score = 1.0
+    if area_hits:
+        score += 0.45 if ri and ri in area_hits else 0.28
+    if issue_hits:
+        score += min(0.45, 0.12 * len(set(issue_hits)))
+    score += min(0.35, 0.07 * len(set(signal_hits)))
+    connection_basis: list[str] = []
+    if ri and ri in area_hits:
+        connection_basis.append(f"동일 리({ri}) 언급")
+    elif area:
+        if area in area_hits:
+            connection_basis.append(f"동일 읍·면({area}) 언급")
+    if issue_hits:
+        connection_basis.append("선택 위치의 허가·민원 쟁점과 일치")
+    elif signal_hits:
+        connection_basis.append("태양광 허가·민원·환경·계통 쟁점 문장")
+    return {
+        "score": round(score, 4),
+        "connection_basis": " · ".join(connection_basis),
+        "snippet_keywords": list(dict.fromkeys(issue_hits + signal_hits + solar_hits)),
+    }
 
 
 def _image_payload(value: Any) -> dict[str, str] | None:
@@ -408,7 +507,7 @@ def yeongam_pins(db: LuceraDB) -> dict[str, Any]:
                   metadata_json AS metadata,
                   COALESCE(permit_date, json_extract(metadata_json, '$.install_year') || '-01-01') AS created_at,
                   COALESCE(json_extract(metadata_json, '$.data_origin'), 'permit_register') AS data_origin,
-                  (SELECT COUNT(*) FROM permit_meeting_link pml WHERE pml.project_id=permit_project.project_id) AS meeting_evidence_count
+                  (SELECT COUNT(DISTINCT pml.meeting_id) FROM permit_meeting_link pml WHERE pml.project_id=permit_project.project_id) AS meeting_evidence_count
            FROM permit_project
            WHERE city_county='영암군' AND latitude IS NOT NULL AND longitude IS NOT NULL
              AND COALESCE(json_extract(metadata_json, '$.map_display'), 1)=1
@@ -518,14 +617,43 @@ def yeongam_permit_context(db: LuceraDB, project_id: str) -> dict[str, Any] | No
              JOIN source_document d ON d.document_id=pml.document_id
             WHERE pml.project_id=?
             ORDER BY pml.match_score DESC, m.meeting_date DESC
-            LIMIT 12""",
+            LIMIT 40""",
         (project_id,),
     ).fetchall()
-    evidence = []
+    ranked: list[tuple[dict[str, Any], dict[str, Any]]] = []
     for item in evidence_rows:
         value = dict(item)
         value["issue_codes"] = _safe_json(value.pop("issue_codes_json"), [])
+        relevance = _permit_evidence_rank(value, permit)
+        if relevance is None:
+            continue
+        ranked.append((value, relevance))
+
+    # One focused passage per meeting is more useful than three OCR variants
+    # from the same sitting. Prefer issue-rich passages, then newer meetings.
+    ranked.sort(
+        key=lambda pair: (
+            pair[1]["score"],
+            str(pair[0].get("meeting_date") or ""),
+            str(pair[0].get("segment_id") or ""),
+        ),
+        reverse=True,
+    )
+    evidence: list[dict[str, Any]] = []
+    seen_meetings: set[str] = set()
+    for value, relevance in ranked:
+        meeting_key = str(value.get("meeting_id") or value.get("meeting_date") or value.get("meeting_title") or "")
+        if meeting_key in seen_meetings:
+            continue
+        seen_meetings.add(meeting_key)
+        value["relevance_score"] = relevance["score"]
+        value["connection_basis"] = relevance["connection_basis"]
+        value["evidence_text"] = _contextual_snippet(
+            str(value.get("text_original") or ""), relevance["snippet_keywords"], 520
+        )
         evidence.append(value)
+        if len(evidence) >= 3:
+            break
     permit["meeting_evidence"] = evidence
     permit["meeting_evidence_count"] = len(evidence)
     return permit

@@ -756,7 +756,9 @@
     }
     async function showPin(pin) {
       const origin = pin.kind === 'permit' ? '영암군 공개 허가 원장' : '사용자 접수 민원';
-      const meeting = pin.meeting_evidence_count ? ` · 회의록 연결 ${pin.meeting_evidence_count}건` : '';
+      // The pin list only carries raw link candidates. Show the count after
+      // the context endpoint has applied the relevance/deduplication filter.
+      const meeting = '';
       const issues = Array.isArray(pin.issues) ? pin.issues.map(issueLabel).join(', ') : '';
       const size = pin.site_area_sqm ? ` · 부지 ${Number(pin.site_area_sqm).toLocaleString()}㎡` : '';
       const capacity = pin.capacity_kw ? ` · ${Number(pin.capacity_kw).toLocaleString()}kW` : '';
@@ -767,8 +769,8 @@
         const evidence = context.meeting_evidence || [];
         const mapContext = context.map_context || {};
         renderMapContext(mapContext);
-        const evidenceHtml = evidence.length ? evidence.slice(0, 3).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.meeting_title || '영암군 회의록')} · ${escapeHtml(item.meeting_date || '')}</strong><span>${escapeHtml(item.text_original || '')}</span></div>`).join('') : '<small>연결된 영암군 회의록 문단이 없습니다.</small>';
-        $('pin-detail').innerHTML += `<div class="evidence-list"><strong>연결 회의록</strong>${evidenceHtml}</div>`;
+        const evidenceHtml = evidence.length ? evidence.slice(0, 3).map((item) => `<div class="evidence-item"><strong>${escapeHtml(item.meeting_title || '영암군 회의록')} · ${escapeHtml(item.meeting_date || '')}</strong><small>${escapeHtml(item.connection_basis || '쟁점 일치 문단')}</small><span>${escapeHtml(item.evidence_text || item.text_original || '')}</span></div>`).join('') : '<small>이 허가 위치와 직접 맞는 회의록 문단이 없습니다. 관련 없는 자료를 근거로 표시하지 않았습니다.</small>';
+        $('pin-detail').innerHTML += `<div class="evidence-list"><strong>연결 회의록 · 쟁점 문장 발췌${evidence.length ? ` · ${evidence.length}건` : ''}</strong>${evidenceHtml}</div>`;
       } catch (error) {
         $('pin-detail').innerHTML += `<br><small>선택한 허가의 회의록·영상 정보를 불러오지 못했습니다.</small>`;
       }
