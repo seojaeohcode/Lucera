@@ -137,6 +137,23 @@
     .status { min-height: 22px; margin-top: 12px; color: var(--ink-soft); font-size: 12px; }
     .status.error { color: #a84b3a; }
     .status.success { color: var(--water-deep); }
+    .status.busy { display: flex; align-items: center; gap: 7px; color: var(--brand-bright); }
+    .status.busy::before { content: ""; width: 12px; height: 12px; flex: 0 0 auto; border: 2px solid #cce8d8; border-top-color: var(--sun-deep); border-radius: 50%; animation: ai-spin .9s linear infinite; }
+    .ai-loading { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px 11px; align-items: center; margin-top: 12px; padding: 13px 14px; border: 1px solid #c9e4d5; border-radius: 14px; color: var(--ink-soft); background: linear-gradient(110deg, #f0faf3, #fff8e7); }
+    .ai-loading[hidden] { display: none; }
+    .ai-loading-mark { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; color: #fff; background: var(--brand); box-shadow: 3px 3px 0 rgba(230,161,0,.42); }
+    .ai-loading-mark::before { content: ""; position: absolute; inset: 5px; border: 2px solid rgba(255,255,255,.42); border-top-color: var(--sun); border-radius: 50%; animation: ai-spin 1s linear infinite; }
+    .ai-loading-mark::after { content: "✦"; position: relative; color: var(--sun); font-size: 12px; animation: ai-pulse 1.15s ease-in-out infinite; }
+    .ai-loading-copy strong, .ai-loading-copy small { display: block; }
+    .ai-loading-copy strong { color: var(--brand); font-size: 12px; letter-spacing: -.02em; }
+    .ai-loading-copy small { margin-top: 2px; color: var(--ink-soft); font-size: 10px; }
+    .ai-loading-track { grid-column: 1 / -1; height: 4px; overflow: hidden; border-radius: 99px; background: #dcefe5; }
+    .ai-loading-track i { display: block; width: 35%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--brand-bright), var(--sun)); animation: ai-progress 1.8s ease-in-out infinite; }
+    .button.is-busy { display: inline-flex; align-items: center; justify-content: center; gap: 8px; pointer-events: none; }
+    .button.is-busy::before { content: ""; width: 13px; height: 13px; flex: 0 0 auto; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ai-spin .8s linear infinite; }
+    @keyframes ai-spin { to { transform: rotate(360deg); } }
+    @keyframes ai-pulse { 0%, 100% { opacity: .45; transform: scale(.86); } 50% { opacity: 1; transform: scale(1.08); } }
+    @keyframes ai-progress { 0% { transform: translateX(-120%); } 50% { transform: translateX(130%); } 100% { transform: translateX(290%); } }
     .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .result-card { border: 1px solid #ded3c4; border-radius: 16px; padding: 15px; background: #fffaf1; }
     .result-card .mini-label { color: var(--brand-bright); font-size: 10px; font-weight: 900; letter-spacing: .11em; }
@@ -322,6 +339,8 @@
     .chat-message .bubble small { margin-bottom: 5px; color: #799083; }
     .chat-message.user .bubble small { color: #d9f2e3; }
     .typing-bubble { display: inline-flex; gap: 5px; align-items: center; min-width: 68px; min-height: 42px; }
+    .typing-copy { margin-right: 3px; color: var(--ink-soft); font-size: 11px; font-weight: 800; }
+    .typing-dots { display: inline-flex; gap: 5px; align-items: center; }
     .typing-bubble i { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-bright); animation: typing-dot 1s infinite ease-in-out; }
     .typing-bubble i:nth-child(2) { animation-delay: .15s; }
     .typing-bubble i:nth-child(3) { animation-delay: .3s; }
@@ -379,7 +398,8 @@
                 <div class="field full"><div class="field-label-row"><label>선택한 주소</label></div><div id="selected-address" class="selected-address"><span>주소</span><strong>사례를 선택해 주세요.</strong></div><input id="complaint-address" type="hidden" required value=""></div>
                 <div class="field full"><div class="field-label-row"><label for="complaint-text">민원 내용</label><span class="field-hint">선택한 사례를 필요하면 수정할 수 있습니다.</span></div><div id="selected-case-title" class="case-title-line">사례를 선택하면 민원 내용이 입력됩니다.</div><textarea id="complaint-text" required placeholder="위 사례를 선택해 주세요."></textarea></div>
               </div>
-              <div class="actions"><button class="button" type="submit">저장하고 분석하기</button></div>
+              <div class="actions"><button id="complaint-submit" class="button" type="submit">저장하고 분석하기</button></div>
+              <div id="complaint-loading" class="ai-loading" hidden role="status" aria-live="polite"><div class="ai-loading-mark" aria-hidden="true"></div><div class="ai-loading-copy"><strong>민원 기록을 분석하고 있습니다</strong><small>주소를 좌표로 바꾸고 영암군 근거를 연결하는 중입니다.</small></div><div class="ai-loading-track" aria-hidden="true"><i></i></div></div>
               <div id="complaint-status" class="status" role="status" aria-live="polite"></div>
             </form>
           </div>
@@ -387,12 +407,12 @@
 
         <section id="step-2" class="step is-locked" aria-labelledby="step-title-2">
           <div class="step-header"><div><span class="step-index">2</span><div class="step-kicker">STEP 2</div><h2 id="step-title-2">AI 분석 · 핀 저장</h2><p class="step-description">결과와 지도 핀을 확인하세요.</p></div><span id="step-2-label" class="lock-label">대기 중</span></div>
-           <div class="step-body"><div id="analysis-empty" class="answer-box">민원을 저장하면 AI 분석과 핀이 나타납니다.</div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="back-to-intake" class="button ghost" type="button">이전: 민원 입력</button><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
+           <div class="step-body"><div id="analysis-empty" class="answer-box"><span id="analysis-placeholder">민원을 저장하면 AI 분석과 핀이 나타납니다.</span><div id="analysis-loading" class="ai-loading" hidden role="status" aria-live="polite"><div class="ai-loading-mark" aria-hidden="true"></div><div class="ai-loading-copy"><strong>영암군 근거를 읽고 있습니다</strong><small>민원 유형·회의록·허가 기록·지도 영상을 함께 확인합니다.</small></div><div class="ai-loading-track" aria-hidden="true"><i></i></div></div></div><div id="analysis-content" hidden><div class="result-grid" id="analysis-summary"></div><div style="margin-top:12px"><h3>AI 분석</h3><div id="initial-answer" class="answer-box" style="margin-top:9px"></div></div><div style="margin-top:17px"><h3>근거</h3><div id="evidence-list" class="evidence-list"></div></div><div class="actions"><button id="back-to-intake" class="button ghost" type="button">이전: 민원 입력</button><button id="next-button" class="button secondary" type="button">다음: 주소 입력</button></div></div></div>
         </section>
 
         <section id="step-3" class="step is-locked" aria-labelledby="step-title-3">
           <div class="step-header"><div><span class="step-index">3</span><div class="step-kicker">STEP 3</div><h2 id="step-title-3">주소 입력 · 챗봇</h2><p class="step-description">같은 근거로 계속 질문하세요.</p></div><span id="step-3-label" class="lock-label">대기 중</span></div>
-          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="back-to-analysis" class="button ghost" type="button">이전: 분석·지도</button><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span id="chat-count" class="chat-count">대화 0회</span></div><div class="chat-notice"><strong>영암군 근거 기반 챗봇</strong><br>공개 허가 원장·회의록·지도 영상을 함께 검토합니다. 답변은 사전점검 참고자료입니다.</div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="무엇이든 물어보세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><span class="helper">지도 영상 자동 포함</span><button class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
+          <div class="step-body"><div id="chat-locked" class="answer-box">2단계 완료 후 주소를 입력하세요.</div><div id="chat-address-panel" hidden><div class="field"><label for="chat-address">주소</label><input id="chat-address" value="" placeholder="영암군 주소"></div><div class="actions"><button id="back-to-analysis" class="button ghost" type="button">이전: 분석·지도</button><button id="address-confirm" class="button secondary" type="button">챗봇 열기</button></div><div id="address-loading" class="ai-loading" hidden role="status" aria-live="polite"><div class="ai-loading-mark" aria-hidden="true"></div><div class="ai-loading-copy"><strong>대화 공간을 준비하고 있습니다</strong><small>저장된 분석과 주소에 연결된 근거를 불러옵니다.</small></div><div class="ai-loading-track" aria-hidden="true"><i></i></div></div><div id="address-status" class="status" role="status" aria-live="polite"></div></div><div id="chat-content" hidden><div class="chat-shell"><div class="chat-head"><div><strong>영암군 챗봇</strong><br><small id="chat-address-label">좌표 연결 대기</small></div><span id="chat-count" class="chat-count">대화 0회</span></div><div class="chat-notice"><strong>영암군 근거 기반 챗봇</strong><br>공개 허가 원장·회의록·지도 영상을 함께 검토합니다. 답변은 사전점검 참고자료입니다.</div><div id="chat-thread" class="chat-thread"></div><form id="chat-form" class="chat-form"><label class="sr-only" for="chat-message">추가 질문</label><textarea id="chat-message" placeholder="무엇이든 물어보세요" required></textarea><div class="chat-tools"><label class="upload">＋ 이미지 첨부<input id="chat-image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><span id="image-name" class="helper">1.5MB 이하</span><span class="helper">지도 영상 자동 포함</span><button id="chat-submit" class="button" type="submit">질문하기</button></div><div id="chat-status" class="status" role="status" aria-live="polite"></div></form></div></div></div></div>
         </section>
       </div>
 
@@ -442,6 +462,37 @@
     }
 
     function setStatus(id, message, kind = '') { const node = $(id); node.textContent = message || ''; node.className = `status ${kind}`; }
+    function setBusyButton(button, busy, idleLabel) {
+      if (!button) return;
+      if (busy) {
+        button.dataset.idleLabel = idleLabel || button.textContent;
+        button.disabled = true;
+        button.classList.add('is-busy');
+        button.setAttribute('aria-busy', 'true');
+        button.textContent = '처리 중';
+      } else {
+        button.disabled = false;
+        button.classList.remove('is-busy');
+        button.removeAttribute('aria-busy');
+        button.textContent = idleLabel || button.dataset.idleLabel || button.textContent;
+      }
+    }
+    function setLoading(id, visible) {
+      const node = $(id); if (!node) return;
+      node.hidden = !visible;
+      node.classList.toggle('is-visible', visible);
+    }
+    function showAnalysisLoading() {
+      $('analysis-content').hidden = true;
+      $('analysis-placeholder').hidden = true;
+      setLoading('analysis-loading', true);
+      $('step-2-label').textContent = 'AI 분석 중';
+      setStep(2);
+    }
+    function hideAnalysisLoading() {
+      setLoading('analysis-loading', false);
+      $('analysis-placeholder').hidden = false;
+    }
     function setStep(step) {
       for (let index = 1; index <= 3; index++) {
         const stepNode = $(`step-${index}`); const navNode = $(`nav-${index}`);
@@ -609,6 +660,7 @@
     function renderAnalysis(result) {
       const analysis = result.analysis || {}; const model = analysis.analysis || {}; const location = analysis.location || {}; const retrieval = analysis.retrieval || {}; const evidence = retrieval.evidence || [];
       currentComplaint = result.complaint; currentConversationId = result.conversation_id;
+      hideAnalysisLoading();
       $('analysis-empty').hidden = true; $('analysis-content').hidden = false; $('step-2-label').textContent = '분석 완료 · 좌표 저장'; $('step-2').classList.add('is-active'); $('step-2').classList.remove('is-locked'); $('nav-2').classList.add('current');
       const generation = (analysis.answer_generation || {}); const generationLabel = generation.mode === 'claude' ? `Claude · ${generation.model || 'API'}` : '로컬 안전 fallback';
       $('analysis-summary').innerHTML = `<div class="result-card"><div class="mini-label">CONCLUSION</div><strong>${escapeHtml(model.conclusion_label || '검토 자료 생성')}</strong><span class="helper">${escapeHtml(location.normalized_address || currentComplaint.normalized_address || '')}</span></div><div class="result-card"><div class="mini-label">COORDINATE</div><strong>${Number(location.latitude).toFixed(5)}, ${Number(location.longitude).toFixed(5)}</strong><span class="helper">${escapeHtml(location.provider || '주소 입력')} · ${escapeHtml((analysis.geocode || {}).status || 'saved')}</span></div><div class="result-card"><div class="mini-label">ANSWER ENGINE</div><strong>${escapeHtml(generationLabel)}</strong><span class="helper">지도 영상 자동 포함</span></div>`;
@@ -650,15 +702,21 @@
       $('chat-count').textContent = `대화 ${chatMessages.filter((message) => message.role === 'user').length}회`; thread.scrollTop = thread.scrollHeight;
     }
     function appendTyping() {
-      const row = document.createElement('div'); row.className = 'chat-message assistant'; row.id = 'chat-typing'; const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); const bubble = document.createElement('div'); bubble.className = 'bubble typing-bubble'; bubble.setAttribute('aria-label', '답변 작성 중'); bubble.innerHTML = '<i></i><i></i><i></i>'; row.appendChild(bubble); $('chat-thread').appendChild(row); $('chat-thread').scrollTop = $('chat-thread').scrollHeight;
+      const row = document.createElement('div'); row.className = 'chat-message assistant'; row.id = 'chat-typing'; const avatar = document.createElement('div'); avatar.className = 'chat-avatar'; avatar.textContent = 'L'; row.appendChild(avatar); const bubble = document.createElement('div'); bubble.className = 'bubble typing-bubble'; bubble.setAttribute('aria-label', '답변 작성 중'); bubble.innerHTML = '<span class="typing-copy">근거를 확인 중</span><span class="typing-dots"><i></i><i></i><i></i></span>'; row.appendChild(bubble); $('chat-thread').appendChild(row); $('chat-thread').scrollTop = $('chat-thread').scrollHeight;
     }
     $('complaint-form').addEventListener('submit', async (event) => {
-      event.preventDefault(); setStatus('complaint-status', '주소 좌표를 확인하고 영암 근거를 연결하는 중입니다…');
+      event.preventDefault();
       if (!selectedCase || !$('complaint-address').value) { setStatus('complaint-status', '먼저 민원 사례를 선택해 주세요.', 'error'); return; }
+      const submit = $('complaint-submit');
+      setBusyButton(submit, true, '저장하고 분석하기');
+      setLoading('complaint-loading', true);
+      setStatus('complaint-status', '주소 좌표와 영암군 근거를 확인하는 중입니다…', 'busy');
+      showAnalysisLoading();
       try {
         const result = await api('/v1/complaints', { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('complaint-address').value, text: $('complaint-text').value, title: selectedCase.title, case_type: selectedCase.id, resolve_address: true, site_area_sqm: 6200, installation_area_sqm: 4500, capacity_kw: 480, nearest_residence_m: 150, nearest_road_m: 120, include_map_context: true }) });
         renderAnalysis(result); await loadPins(); showPin({ title: result.complaint.title, address: result.complaint.normalized_address, data_origin: 'user_input', issues: result.complaint.issue_codes }); setStatus('complaint-status', '저장 완료. 아래 2단계에서 AI 설명과 연결 근거를 확인하세요.', 'success');
-      } catch (error) { setStatus('complaint-status', error.message, 'error'); }
+      } catch (error) { hideAnalysisLoading(); setLoading('complaint-loading', false); setStep(1); setStatus('complaint-status', error.message, 'error'); }
+      finally { setLoading('complaint-loading', false); setBusyButton(submit, false, '저장하고 분석하기'); }
     });
     function openChatStep() {
       if (!currentComplaint) return;
@@ -671,10 +729,46 @@
     $('next-button').addEventListener('click', openChatStep);
     $('back-to-intake').addEventListener('click', () => setStep(1)); $('back-to-analysis').addEventListener('click', () => setStep(2));
     document.querySelectorAll('.journey-nav button').forEach((button) => button.addEventListener('click', () => setStep(Number(button.dataset.step))));
-    $('address-confirm').addEventListener('click', async () => { const address = $('chat-address').value.trim(); if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error'); $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address; setStatus('address-status', '저장된 대화를 불러오는 중입니다…'); try { const conversation = await api(`/v1/conversations/${currentConversationId}`); renderMessages(conversation.messages || []); setStatus('address-status', '같은 민원과 근거를 이어서 대화할 수 있습니다.', 'success'); } catch (error) { renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]); setStatus('address-status', '초기 분석을 표시했습니다. 이어서 질문할 수 있습니다.', 'success'); } $('chat-message').focus(); });
+    $('address-confirm').addEventListener('click', async () => {
+      const address = $('chat-address').value.trim();
+      if (!address.includes('영암군')) return setStatus('address-status', '영암군 주소만 사용할 수 있습니다.', 'error');
+      const confirm = $('address-confirm');
+      setBusyButton(confirm, true, '챗봇 열기');
+      setLoading('address-loading', true);
+      setStatus('address-status', '저장된 분석과 근거를 불러오는 중입니다…', 'busy');
+      $('step-3-label').textContent = '대화 준비 중';
+      try {
+        const conversation = await api(`/v1/conversations/${currentConversationId}`);
+        renderMessages(conversation.messages || []);
+        $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address;
+        setStatus('address-status', '같은 근거로 계속 질문할 수 있습니다.', 'success');
+      } catch (error) {
+        renderMessages([{ role: 'assistant', content: $('initial-answer').textContent }]);
+        $('chat-address-panel').hidden = true; $('chat-content').hidden = false; $('step-3-label').textContent = '대화 가능'; $('chat-address-label').textContent = address;
+        setStatus('address-status', '초기 분석을 표시했습니다. 이어서 질문할 수 있습니다.', 'success');
+      } finally {
+        setLoading('address-loading', false);
+        setBusyButton(confirm, false, '챗봇 열기');
+      }
+      $('chat-message').focus();
+    });
     $('chat-image').addEventListener('change', () => { const file = $('chat-image').files[0]; $('image-name').textContent = file ? `${file.name} 선택됨` : '사진은 관찰 보조 자료로만 사용됩니다 · 1.5MB 이하'; });
     function readImage(file) { return new Promise((resolve, reject) => { if (!file) return resolve(null); if (file.size > 1.5 * 1024 * 1024) return reject(new Error('이미지는 1.5MB 이하만 첨부할 수 있습니다.')); const reader = new FileReader(); reader.onload = () => { const value = String(reader.result || ''); resolve({ media_type: file.type, data: value.split(',')[1] || '' }); }; reader.onerror = () => reject(new Error('이미지를 읽지 못했습니다.')); reader.readAsDataURL(file); }); }
-    $('chat-form').addEventListener('submit', async (event) => { event.preventDefault(); if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error'); const input = $('chat-message'); const messageText = input.value.trim(); if (!messageText) return; const submit = $('chat-form button[type="submit"]'); submit.disabled = true; chatMessages = [...chatMessages, { role: 'user', content: messageText }]; renderMessages(chatMessages); appendTyping(); setStatus('chat-status', '영암 근거와 지도 영상을 함께 다시 확인하는 중입니다…'); try { const image = await readImage($('chat-image').files[0]); const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: messageText, image, include_map_context: true }) }); renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success'); } catch (error) { document.getElementById('chat-typing')?.remove(); setStatus('chat-status', error.message, 'error'); } finally { submit.disabled = false; } });
+    $('chat-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!currentConversationId) return setStatus('chat-status', '먼저 민원을 접수해 주세요.', 'error');
+      const input = $('chat-message'); const messageText = input.value.trim(); if (!messageText) return;
+      const submit = $('chat-submit');
+      setBusyButton(submit, true, '질문하기');
+      chatMessages = [...chatMessages, { role: 'user', content: messageText }]; renderMessages(chatMessages); appendTyping();
+      setStatus('chat-status', '영암 근거와 지도 영상을 함께 확인해 답변을 만드는 중입니다…', 'busy');
+      try {
+        const image = await readImage($('chat-image').files[0]);
+        const result = await api(`/v1/conversations/${currentConversationId}/messages`, { method: 'POST', headers: jsonHeaders, body: JSON.stringify({ address: $('chat-address').value, message: messageText, image, include_map_context: true }) });
+        renderMessages(result.messages); renderMapContext(result.analysis?.map_context || {}); input.value = ''; $('chat-image').value = ''; $('image-name').textContent = '1.5MB 이하'; setStatus('chat-status', '답변을 저장했습니다. 같은 근거로 계속 질문할 수 있습니다.', 'success');
+      } catch (error) { document.getElementById('chat-typing')?.remove(); setStatus('chat-status', error.message, 'error'); }
+      finally { setBusyButton(submit, false, '질문하기'); }
+    });
     $('chat-message').addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') $('chat-form').requestSubmit(); });
     $('slide-modal-close').addEventListener('click', () => { $('slide-modal').hidden = true; }); $('slide-modal').addEventListener('click', (event) => { if (event.target === $('slide-modal')) $('slide-modal').hidden = true; }); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') $('slide-modal').hidden = true; });
     setStep(1); loadRuntimeStatus(); loadPins(); loadFeature(activeFeature); loadCaseCatalog();
