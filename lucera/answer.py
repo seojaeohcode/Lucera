@@ -30,7 +30,7 @@ DEFAULT_MODEL = "claude-sonnet-5"
 DEFAULT_TIMEOUT_SECONDS = 40.0
 # Korean prose costs roughly twice the tokens of the equivalent English, and a
 # truncated reply is unparseable JSON rather than a short answer.
-DEFAULT_MAX_TOKENS = 4000
+DEFAULT_MAX_TOKENS = 8000
 
 # How much of the pack the model is allowed to see. Trimming is not only about
 # cost: a smaller pack makes the numeric guard's whitelist tight, so a fabricated
