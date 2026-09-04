@@ -13,6 +13,7 @@ data/db/snapshots/
 data/dataset/
 data/reference/public_api/
 data/reference/source_materials/
+data/reference/
 data/work/
 artifacts/
 config.local.py
